@@ -25,6 +25,7 @@ enum AppText {
     static var normalShort: String { choose(en: "OK", zh: "正常") }
     static var warningShort: String { choose(en: "WARN", zh: "注意") }
     static var criticalShort: String { choose(en: "HOT", zh: "严重") }
+    static var usage: String { choose(en: "Usage", zh: "用量") }
     static var updated: String { choose(en: "Updated", zh: "更新于") }
     static var refresh: String { choose(en: "Refresh", zh: "刷新") }
     static var activityMonitor: String { choose(en: "Activity Monitor", zh: "活动监视器") }

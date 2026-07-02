@@ -27,7 +27,7 @@ struct StatusPanelView: View {
     private var header: some View {
         ZStack(alignment: .topLeading) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(monitor.snapshot.overallLevel.title)
+                Text(AppText.usage)
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.primary)
 
