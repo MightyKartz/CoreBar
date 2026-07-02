@@ -21,7 +21,7 @@ UsageBar 是一个轻量的 macOS 原生菜单栏监控工具，用来显示 CPU
 
 从 [GitHub Releases](https://github.com/MightyKartz/usage/releases/latest) 下载最新 macOS 构建。
 
-首个版本已使用 Developer ID 签名，但暂未做 Apple notarization 公证。如果 macOS 首次启动时拦截，可以右键点击应用并选择 **打开**，或者从源码自行构建。
+发布构建已使用 Developer ID 签名，但暂未做 Apple notarization 公证。如果 macOS 首次启动时拦截，可以右键点击应用并选择 **打开**，或者从源码自行构建。
 
 ## 从源码构建
 
