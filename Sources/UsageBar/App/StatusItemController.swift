@@ -38,7 +38,7 @@ final class StatusItemController: NSObject {
 
     private func configurePopover() {
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 340, height: 230)
+        popover.contentSize = NSSize(width: 340, height: 352)
         popover.contentViewController = NSHostingController(rootView: StatusPanelView(monitor: monitor))
     }
 

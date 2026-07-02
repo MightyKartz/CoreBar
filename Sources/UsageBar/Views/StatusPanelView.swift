@@ -1,81 +1,63 @@
-import AppKit
 import SwiftUI
 
 struct StatusPanelView: View {
     @ObservedObject var monitor: SystemMonitor
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        ZStack(alignment: .topLeading) {
             header
 
-            VStack(spacing: 12) {
-                ForEach(monitor.snapshot.metrics) { metric in
-                    MetricRowView(metric: metric, history: monitor.history.values(for: metric.kind))
-                }
-            }
-
-            Divider()
-
-            HStack {
-                Button(AppText.refresh) {
-                    monitor.refresh()
-                }
-
-                Button(AppText.activityMonitor) {
-                    openActivityMonitor()
-                }
-
-                Spacer()
-
-                Button(AppText.quit) {
-                    NSApplication.shared.terminate(nil)
-                }
-                .keyboardShortcut("q")
+            ForEach(Array(monitor.snapshot.metrics.enumerated()), id: \.element.id) { index, metric in
+                MetricRowView(
+                    metric: metric,
+                    history: monitor.history.values(for: metric.kind),
+                    showsDetail: metric.kind != .disk
+                )
+                .offset(x: 24, y: 84 + CGFloat(index * 100))
             }
         }
-        .padding(16)
-        .frame(width: 340)
+        .frame(width: 340, height: 352)
         .background(VisualEffectBackground(material: .popover))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(.white.opacity(0.45), lineWidth: 1)
+        }
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
-            statusIcon
+        ZStack(alignment: .topLeading) {
+            Circle()
+                .fill(accentColor.opacity(0.16))
+                .frame(width: 24, height: 24)
+                .offset(x: 18, y: 22)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(monitor.snapshot.overallLevel.title)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.primary)
+
                 Text("\(AppText.updated) \(monitor.snapshot.timestamp.shortTimeText)")
-                    .font(.caption)
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
-
-            Spacer()
+            .offset(x: 54, y: 20)
 
             Text(monitor.snapshot.overallLevel.shortTitle)
-                .font(.caption.weight(.semibold))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .foregroundStyle(monitor.snapshot.overallLevel.color)
-                .background(monitor.snapshot.overallLevel.color.opacity(0.14), in: Capsule())
+                .font(.system(size: 10, weight: .bold))
+                .frame(width: 36, height: 20)
+                .foregroundStyle(accentColor)
+                .background(accentColor.opacity(0.14), in: Capsule())
+                .offset(x: 280, y: 20)
         }
+        .frame(width: 340, height: 64, alignment: .topLeading)
     }
 
-    @ViewBuilder
-    private var statusIcon: some View {
-        let icon = Image(systemName: "gauge.with.dots.needle.67percent")
-            .font(.title2)
-            .foregroundStyle(monitor.snapshot.overallLevel.color)
-
-        if monitor.snapshot.overallLevel == .normal {
-            icon
-        } else {
-            icon.symbolEffect(.pulse, options: .repeating, value: monitor.snapshot.timestamp)
+    private var accentColor: Color {
+        switch monitor.snapshot.overallLevel {
+        case .normal: .green
+        case .warning: .orange
+        case .critical: .red
         }
-    }
-
-    private func openActivityMonitor() {
-        let url = URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")
-        NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
 }

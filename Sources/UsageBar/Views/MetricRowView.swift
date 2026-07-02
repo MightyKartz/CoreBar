@@ -3,34 +3,58 @@ import SwiftUI
 struct MetricRowView: View {
     let metric: MetricSnapshot
     let history: [Double]
+    let showsDetail: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Image(systemName: metric.symbol)
-                    .foregroundStyle(metric.level.color)
-                    .frame(width: 18)
-
+        ZStack(alignment: .topLeading) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(AppText.metricTitle(metric.kind))
-                    .font(.subheadline.weight(.medium))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
 
                 Spacer()
 
                 Text(metric.value.percentText)
-                    .font(.subheadline.monospacedDigit().weight(.semibold))
-                    .foregroundStyle(metric.level.color)
+                    .font(.system(size: 13, weight: .bold).monospacedDigit())
+                    .foregroundStyle(accentColor)
             }
+            .frame(width: 246, height: 16, alignment: .topLeading)
 
-            ProgressView(value: metric.value.clamped01)
-                .tint(metric.level.color)
+            progressBar
+                .offset(y: 14)
 
             MetricSparklineView(values: history, level: metric.level)
-                .frame(height: 28)
+                .frame(width: 246, height: 31)
+                .offset(y: 24)
 
-            Text(detailText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+            if showsDetail {
+                Text(detailText)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .offset(y: 70)
+            }
+        }
+        .frame(width: 246, height: 86, alignment: .topLeading)
+    }
+
+    private var progressBar: some View {
+        ZStack(alignment: .leading) {
+            Capsule()
+                .fill(.secondary.opacity(0.18))
+
+            Capsule()
+                .fill(accentColor)
+                .frame(width: 246 * metric.value.clamped01)
+        }
+        .frame(width: 246, height: 5)
+    }
+
+    private var accentColor: Color {
+        switch metric.level {
+        case .normal: .green
+        case .warning: .orange
+        case .critical: .red
         }
     }
 

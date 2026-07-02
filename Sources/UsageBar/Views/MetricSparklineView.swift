@@ -7,12 +7,6 @@ struct MetricSparklineView: View {
     var body: some View {
         Canvas { context, size in
             let rect = CGRect(origin: .zero, size: size)
-            let baseline = rect.maxY - 1
-
-            var guide = Path()
-            guide.move(to: CGPoint(x: rect.minX, y: baseline))
-            guide.addLine(to: CGPoint(x: rect.maxX, y: baseline))
-            context.stroke(guide, with: .color(.secondary.opacity(0.16)), lineWidth: 1)
 
             guard values.count > 1 else {
                 return
@@ -31,8 +25,16 @@ struct MetricSparklineView: View {
                 }
             }
 
-            context.stroke(path, with: .color(level.color.opacity(0.82)), lineWidth: 1.5)
+            context.stroke(path, with: .color(accentColor.opacity(0.82)), lineWidth: 2)
         }
         .accessibilityLabel("60 second history")
+    }
+
+    private var accentColor: Color {
+        switch level {
+        case .normal: .green
+        case .warning: .orange
+        case .critical: .red
+        }
     }
 }
