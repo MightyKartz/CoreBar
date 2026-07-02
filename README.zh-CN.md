@@ -1,10 +1,10 @@
-# UsageBar
+# CoreBar
 
 [English README](README.md)
 
-UsageBar 是一个安静的 macOS 菜单栏用量监控工具，用来查看 CPU、内存和磁盘状态。它在菜单栏里保持紧凑，适合长期放在后台运行，点击后再显示具体数字。
+CoreBar 是一个安静的 macOS 菜单栏用量监控工具，用来查看 CPU、内存和磁盘状态。它在菜单栏里保持紧凑，适合长期放在后台运行，点击后再显示具体数字。
 
-![UsageBar 菜单栏预览](docs/images/menu-bar-preview.svg)
+![CoreBar 菜单栏预览](docs/images/menu-bar-preview.svg)
 
 ## 显示内容
 
@@ -15,11 +15,11 @@ UsageBar 是一个安静的 macOS 菜单栏用量监控工具，用来查看 CPU
 - 自动根据系统语言显示中文或英文。
 - 只读取本机系统状态，不需要账号，不做追踪，不连接云服务。
 
-![UsageBar 弹出面板预览](docs/images/panel-preview.svg)
+![CoreBar 弹出面板预览](docs/images/panel-preview.svg)
 
-## 为什么做 UsageBar
+## 为什么做 CoreBar
 
-UsageBar 面向只想快速判断系统状态、但不想频繁打开活动监视器的用户。它足够轻，可以一直留在菜单栏；需要细节时，再点开查看。
+CoreBar 面向只想快速判断系统状态、但不想频繁打开活动监视器的用户。它足够轻，可以一直留在菜单栏；需要细节时，再点开查看。
 
 ## 下载
 
@@ -45,11 +45,11 @@ swift test
 如果本机有 Developer ID 证书，可以构建签名版：
 
 ```bash
-VERSION=0.1.3 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_and_run.sh --verify
+VERSION=0.1.4 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_and_run.sh --verify
 ```
 
-应用会生成在 `dist/UsageBar.app`。
+应用会生成在 `dist/CoreBar.app`。
 
 ## 隐私
 
-UsageBar 只读取本机系统统计信息，不会把数据发送到任何地方。
+CoreBar 只读取本机系统统计信息，不会把数据发送到任何地方。

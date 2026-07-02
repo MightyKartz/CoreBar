@@ -1,10 +1,10 @@
-# UsageBar
+# CoreBar
 
 [中文说明](README.zh-CN.md)
 
-UsageBar is a quiet macOS menu bar monitor for CPU, memory, and disk usage. It stays compact in the menu bar, keeps its background presence light, and shows exact numbers only when you click.
+CoreBar is a quiet macOS menu bar monitor for CPU, memory, and disk usage. It stays compact in the menu bar, keeps its background presence light, and shows exact numbers only when you click.
 
-![UsageBar menu bar preview](docs/images/menu-bar-preview.svg)
+![CoreBar menu bar preview](docs/images/menu-bar-preview.svg)
 
 ## What It Shows
 
@@ -15,11 +15,11 @@ UsageBar is a quiet macOS menu bar monitor for CPU, memory, and disk usage. It s
 - Automatic English or Chinese UI based on your system language.
 - Local-only system readings. No account, tracking, or cloud service.
 
-![UsageBar popover preview](docs/images/panel-preview.svg)
+![CoreBar popover preview](docs/images/panel-preview.svg)
 
-## Why UsageBar
+## Why CoreBar
 
-UsageBar is for people who want a quick system signal without opening Activity Monitor. It is small enough to leave running all day, with the detail hidden until you need it.
+CoreBar is for people who want a quick system signal without opening Activity Monitor. It is small enough to leave running all day, with the detail hidden until you need it.
 
 ## Download
 
@@ -45,11 +45,11 @@ swift test
 Build a signed local app bundle when a Developer ID identity exists:
 
 ```bash
-VERSION=0.1.3 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_and_run.sh --verify
+VERSION=0.1.4 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_and_run.sh --verify
 ```
 
-The app bundle is written to `dist/UsageBar.app`.
+The app bundle is written to `dist/CoreBar.app`.
 
 ## Privacy
 
-UsageBar reads local system statistics only. It does not send data anywhere.
+CoreBar reads local system statistics only. It does not send data anywhere.

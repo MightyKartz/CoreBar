@@ -2,15 +2,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "UsageBar",
+    name: "CoreBar",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "UsageBar", targets: ["UsageBar"])
+        .executable(name: "CoreBar", targets: ["CoreBar"])
     ],
     targets: [
-        .executableTarget(name: "UsageBar"),
-        .testTarget(name: "UsageBarTests", dependencies: ["UsageBar"])
+        .executableTarget(name: "CoreBar"),
+        .testTarget(name: "CoreBarTests", dependencies: ["CoreBar"])
     ]
 )

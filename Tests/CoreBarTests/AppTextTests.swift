@@ -1,5 +1,5 @@
 import XCTest
-@testable import UsageBar
+@testable import CoreBar
 
 final class AppTextTests: XCTestCase {
     func testDetectsChineseFromLocaleOrPreferredLanguages() {

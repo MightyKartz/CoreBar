@@ -1,5 +1,5 @@
 <svg width="780" height="150" viewBox="0 0 780 150" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">UsageBar menu bar preview</title>
+  <title id="title">CoreBar menu bar preview</title>
   <desc id="desc">A macOS menu bar preview with CPU, MEM, and DSK labels and thin usage bars.</desc>
   <defs>
     <linearGradient id="bar" x1="0" x2="0" y1="0" y2="1">
