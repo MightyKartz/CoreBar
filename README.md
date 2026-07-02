@@ -2,20 +2,24 @@
 
 [中文说明](README.zh-CN.md)
 
-UsageBar is a small native macOS menu bar monitor for CPU, memory, and disk usage. It keeps the menu bar quiet: three compact labels, three thin usage bars, no large percentages until you click.
+UsageBar is a quiet macOS menu bar monitor for CPU, memory, and disk usage. It stays compact in the menu bar, keeps its background presence light, and shows exact numbers only when you click.
 
 ![UsageBar menu bar preview](docs/images/menu-bar-preview.svg)
 
-## Highlights
+## What It Shows
 
-- Native macOS menu bar app built with Swift, SwiftUI, and AppKit.
-- One compact status item for CPU, memory, and disk.
-- Click the menu bar item to see exact used, free, and total values.
-- 60 second mini history sparklines in the popover.
-- Automatic English or Chinese UI based on the system language.
-- Local-only sampling. No analytics, account, or network service.
+- CPU, memory, and disk usage in one native menu bar item.
+- Compact labels with slim usage bars, tuned for light and dark mode.
+- A glass-style popover with exact used, free, and total values.
+- 60-second mini history sparklines for quick trend checks.
+- Automatic English or Chinese UI based on your system language.
+- Local-only system readings. No account, tracking, or cloud service.
 
 ![UsageBar popover preview](docs/images/panel-preview.svg)
+
+## Why UsageBar
+
+UsageBar is for people who want a quick system signal without opening Activity Monitor. It is small enough to leave running all day, with the detail hidden until you need it.
 
 ## Download
 
@@ -41,14 +45,10 @@ swift test
 Build a signed local app bundle when a Developer ID identity exists:
 
 ```bash
-VERSION=0.1.0 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_and_run.sh --verify
+VERSION=0.1.3 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_and_run.sh --verify
 ```
 
 The app bundle is written to `dist/UsageBar.app`.
-
-## Project Description
-
-UsageBar is designed for people who want a quick system health signal without opening Activity Monitor. The menu bar item stays close to native macOS proportions, while the popover gives concrete CPU, memory, and disk details when needed.
 
 ## Privacy
 

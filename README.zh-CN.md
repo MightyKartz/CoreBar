@@ -2,20 +2,24 @@
 
 [English README](README.md)
 
-UsageBar 是一个轻量的 macOS 原生菜单栏监控工具，用来显示 CPU、内存和磁盘使用状态。它默认保持克制：菜单栏只显示三组小文字和横向用量条，点击后才显示具体百分比、已用、剩余和总量。
+UsageBar 是一个安静的 macOS 菜单栏用量监控工具，用来查看 CPU、内存和磁盘状态。它在菜单栏里保持紧凑，适合长期放在后台运行，点击后再显示具体数字。
 
 ![UsageBar 菜单栏预览](docs/images/menu-bar-preview.svg)
 
-## 主要特性
+## 显示内容
 
-- 使用 Swift、SwiftUI 和 AppKit 构建的 macOS 原生菜单栏应用。
-- 一个紧凑的菜单栏状态项，同时显示 CPU、内存和磁盘。
-- 点击菜单栏后显示具体用量、剩余量和总量。
-- 弹出面板包含 60 秒 mini history sparkline。
-- 自动根据系统语言显示英文或中文。
-- 只在本地采样系统状态，不需要账号，不上传数据。
+- 在一个原生菜单栏项目里显示 CPU、内存和磁盘用量。
+- 小字标签搭配细横条，自动适配浅色和深色模式。
+- 点击后打开磨砂玻璃风格面板，显示已用、剩余和总量。
+- 每组指标都有 60 秒 mini history sparkline，方便快速看趋势。
+- 自动根据系统语言显示中文或英文。
+- 只读取本机系统状态，不需要账号，不做追踪，不连接云服务。
 
 ![UsageBar 弹出面板预览](docs/images/panel-preview.svg)
+
+## 为什么做 UsageBar
+
+UsageBar 面向只想快速判断系统状态、但不想频繁打开活动监视器的用户。它足够轻，可以一直留在菜单栏；需要细节时，再点开查看。
 
 ## 下载
 
@@ -41,14 +45,10 @@ swift test
 如果本机有 Developer ID 证书，可以构建签名版：
 
 ```bash
-VERSION=0.1.0 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_and_run.sh --verify
+VERSION=0.1.3 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_and_run.sh --verify
 ```
 
 应用会生成在 `dist/UsageBar.app`。
-
-## 项目说明
-
-UsageBar 面向只想快速判断系统状态、但不想频繁打开活动监视器的用户。菜单栏显示尽量贴近 macOS 原生比例，弹出面板则在需要时提供更完整的 CPU、内存和磁盘细节。
 
 ## 隐私
 
