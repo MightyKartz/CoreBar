@@ -47,7 +47,7 @@ final class StatusItemController: NSObject {
             return
         }
 
-        let image = StatusIconRenderer.image(for: snapshot)
+        let image = StatusIconRenderer.image(for: snapshot, appearance: button.effectiveAppearance)
         statusItem.length = image.size.width
         button.image = image
         button.toolTip = snapshot.metrics

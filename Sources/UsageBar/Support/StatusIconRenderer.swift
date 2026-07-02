@@ -9,7 +9,23 @@ enum StatusIconRenderer {
         Layout(statusBarThickness: statusBarThickness).imageSize
     }
 
-    static func image(for snapshot: SystemSnapshot, statusBarThickness: CGFloat = NSStatusBar.system.thickness) -> NSImage {
+    static func image(
+        for snapshot: SystemSnapshot,
+        statusBarThickness: CGFloat = NSStatusBar.system.thickness,
+        appearance: NSAppearance? = nil
+    ) -> NSImage {
+        guard let appearance else {
+            return drawImage(for: snapshot, statusBarThickness: statusBarThickness)
+        }
+
+        var image: NSImage!
+        appearance.performAsCurrentDrawingAppearance {
+            image = drawImage(for: snapshot, statusBarThickness: statusBarThickness)
+        }
+        return image
+    }
+
+    private static func drawImage(for snapshot: SystemSnapshot, statusBarThickness: CGFloat) -> NSImage {
         let layout = Layout(statusBarThickness: statusBarThickness)
         let image = NSImage(size: layout.imageSize)
         image.isTemplate = false
@@ -39,9 +55,9 @@ enum StatusIconRenderer {
             height: layout.labelHeight
         )
         let barRect = NSRect(
-            x: groupRect.minX + 1,
+            x: groupRect.minX + layout.barInset,
             y: layout.barY,
-            width: max(1, groupWidth - 2),
+            width: max(1, groupWidth - layout.barInset * 2),
             height: layout.barHeight
         )
 
@@ -61,7 +77,7 @@ enum StatusIconRenderer {
         ]
         let textSize = abbreviation.size(withAttributes: attributes)
         let textRect = NSRect(
-            x: rect.midX - textSize.width / 2,
+            x: rect.minX,
             y: rect.midY - textSize.height / 2,
             width: textSize.width,
             height: textSize.height
@@ -72,7 +88,7 @@ enum StatusIconRenderer {
 
     private static func drawBar(value: Double, in rect: NSRect) {
         let path = NSBezierPath(rect: rect)
-        NSColor.tertiaryLabelColor.withAlphaComponent(0.55).setFill()
+        NSColor.tertiaryLabelColor.withAlphaComponent(0.5).setFill()
         path.fill()
 
         let fillWidth = max(1, rect.width * value.clamped01)
@@ -91,32 +107,35 @@ enum StatusIconRenderer {
         let labelHeight: CGFloat
         let labelY: CGFloat
         let barHeight: CGFloat
+        let barInset: CGFloat
         let barY: CGFloat
         private let groupWidths: [CGFloat]
-        private let groupGap: CGFloat
+        private let groupOffsets: [CGFloat]
 
         init(statusBarThickness: CGFloat) {
             let thickness = max(18, statusBarThickness)
-            let defaultFont = NSFont.menuBarFont(ofSize: 0)
-            let visualIconHeight = max(14, thickness - 4)
-            let labelBarGap: CGFloat = max(2, (visualIconHeight * 0.16).rounded())
-            let labelVisualHeight = max(6, ((visualIconHeight - labelBarGap) * 0.5).rounded(.down))
-            barHeight = max(3, ((visualIconHeight - labelBarGap) * 0.3).rounded(.down))
-            let targetPointSize = defaultFont.pointSize * (labelVisualHeight / defaultFont.capHeight)
-            labelFont = NSFont.menuBarFont(ofSize: targetPointSize)
+            let scale = thickness / 22
+            labelFont = NSFont.menuBarFont(ofSize: 8 * scale)
             let attributes: [NSAttributedString.Key: Any] = [.font: labelFont]
             groupWidths = ["CPU", "MEM", "DSK"].map { ceil($0.size(withAttributes: attributes).width) }
-            labelHeight = labelVisualHeight
-            groupGap = max(6, (thickness * 0.28).rounded())
+            groupOffsets = [0, 26, 55].map { ($0 * scale).rounded() }
+            labelHeight = ceil("MEM".size(withAttributes: attributes).height)
+            let labelBarGap = max(3, (4 * scale).rounded())
+            barHeight = max(2, (3 * scale).rounded())
+            barInset = max(1, (1 * scale).rounded())
             let contentHeight = labelHeight + labelBarGap + barHeight
             let topPadding = max(0, ((thickness - contentHeight) / 2).rounded(.down))
             barY = topPadding
             labelY = barY + barHeight + labelBarGap
-            imageSize = NSSize(width: groupWidths.reduce(0, +) + groupGap * 2, height: thickness)
+            let width = zip(groupOffsets, groupWidths).map(+).max() ?? 0
+            imageSize = NSSize(width: ceil(width), height: thickness)
         }
 
         func groupOriginX(for index: Int) -> CGFloat {
-            groupWidths.prefix(index).reduce(0, +) + CGFloat(index) * groupGap
+            guard groupOffsets.indices.contains(index) else {
+                return groupOffsets.last ?? 0
+            }
+            return groupOffsets[index]
         }
 
         func groupWidth(for index: Int) -> CGFloat {

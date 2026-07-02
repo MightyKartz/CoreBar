@@ -6,7 +6,15 @@ final class StatusIconRendererTests: XCTestCase {
         let image = StatusIconRenderer.image(for: .placeholder, statusBarThickness: 22)
 
         XCTAssertEqual(image.size.height, 22)
-        XCTAssertGreaterThan(image.size.width, 60)
+        XCTAssertEqual(image.size.width, 72)
+    }
+
+    func testRendersWithDarkAppearance() throws {
+        let appearance = try XCTUnwrap(NSAppearance(named: .darkAqua))
+        let image = StatusIconRenderer.image(for: .placeholder, statusBarThickness: 22, appearance: appearance)
+
+        XCTAssertEqual(image.size.height, 22)
+        XCTAssertEqual(image.size.width, 72)
     }
 
     func testImageSizeFollowsStatusBarThickness() {
