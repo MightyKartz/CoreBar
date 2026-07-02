@@ -10,10 +10,9 @@ struct StatusPanelView: View {
             ForEach(Array(monitor.snapshot.metrics.enumerated()), id: \.element.id) { index, metric in
                 MetricRowView(
                     metric: metric,
-                    history: monitor.history.values(for: metric.kind),
-                    showsDetail: metric.kind != .disk
+                    history: monitor.history.values(for: metric.kind)
                 )
-                .offset(x: 24, y: 84 + CGFloat(index * 100))
+                .offset(x: 24, y: 80 + CGFloat(index * 88))
             }
         }
         .frame(width: 340, height: 352, alignment: .topLeading)

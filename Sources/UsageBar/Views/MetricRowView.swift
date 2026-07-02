@@ -3,7 +3,6 @@ import SwiftUI
 struct MetricRowView: View {
     let metric: MetricSnapshot
     let history: [Double]
-    let showsDetail: Bool
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -28,13 +27,11 @@ struct MetricRowView: View {
                 .frame(width: 246, height: 31)
                 .offset(y: 32)
 
-            if showsDetail {
-                Text(detailText)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .offset(y: 76)
-            }
+            Text(detailText)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .offset(y: 76)
         }
         .frame(width: 246, height: 86, alignment: .topLeading)
     }
