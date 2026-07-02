@@ -11,6 +11,12 @@ struct MetricRowView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.primary)
 
+                Text(compactDetailText)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+
                 Spacer()
 
                 Text(metric.value.percentText)
@@ -26,12 +32,6 @@ struct MetricRowView: View {
             MetricSparklineView(values: history, level: metric.level)
                 .frame(width: 246, height: 31)
                 .offset(y: 32)
-
-            Text(detailText)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .offset(y: 76)
         }
         .frame(width: 246, height: 86, alignment: .topLeading)
     }
@@ -56,7 +56,7 @@ struct MetricRowView: View {
         }
     }
 
-    private var detailText: String {
+    private var compactDetailText: String {
         switch metric.kind {
         case .cpu:
             let cores = metric.coreCount ?? 0
@@ -65,12 +65,12 @@ struct MetricRowView: View {
             guard let used = metric.usedBytes, let total = metric.totalBytes else {
                 return AppText.waiting
             }
-            return "\(AppText.used) \(used.byteText) / \(total.byteText) · \(AppText.pressure) \(metric.level.title)"
+            return "\(AppText.used) \(used.byteText) / \(total.byteText)"
         case .disk:
-            guard let used = metric.usedBytes, let total = metric.totalBytes, let free = metric.freeBytes else {
+            guard let used = metric.usedBytes, let total = metric.totalBytes else {
                 return AppText.waiting
             }
-            return "\(AppText.used) \(used.byteText) / \(total.byteText) · \(AppText.free) \(free.byteText)"
+            return "\(AppText.used) \(used.byteText) / \(total.byteText)"
         }
     }
 }
