@@ -23,7 +23,7 @@ UsageBar is for people who want a quick system signal without opening Activity M
 
 ## Download
 
-Download the latest macOS build from [GitHub Releases](https://github.com/MightyKartz/usage/releases/latest).
+Download the latest macOS build from [GitHub Releases](https://github.com/MightyKartz/UsageBar/releases/latest).
 
 Release builds are Developer ID signed, but they are not notarized yet. If macOS blocks the app on first launch, right-click the app and choose **Open**, or build it from source.
 
