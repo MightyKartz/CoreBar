@@ -27,11 +27,6 @@ struct StatusPanelView: View {
 
     private var header: some View {
         ZStack(alignment: .topLeading) {
-            Circle()
-                .fill(accentColor.opacity(0.16))
-                .frame(width: 24, height: 24)
-                .offset(x: 18, y: 22)
-
             VStack(alignment: .leading, spacing: 2) {
                 Text(monitor.snapshot.overallLevel.title)
                     .font(.system(size: 15, weight: .bold))
@@ -41,9 +36,9 @@ struct StatusPanelView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
-            .offset(x: 54, y: 20)
+            .offset(x: 24, y: 20)
 
-            Text(monitor.snapshot.overallLevel.shortTitle)
+            Text(badgeText)
                 .font(.system(size: 10, weight: .bold))
                 .frame(width: 36, height: 20)
                 .foregroundStyle(accentColor)
@@ -51,6 +46,18 @@ struct StatusPanelView: View {
                 .offset(x: 280, y: 20)
         }
         .frame(width: 340, height: 64, alignment: .topLeading)
+    }
+
+    private var badgeText: String {
+        if AppText.isChinese {
+            switch monitor.snapshot.overallLevel {
+            case .normal: "良好"
+            case .warning: "警戒"
+            case .critical: "高压"
+            }
+        } else {
+            monitor.snapshot.overallLevel.shortTitle
+        }
     }
 
     private var accentColor: Color {

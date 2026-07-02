@@ -19,20 +19,21 @@ struct MetricRowView: View {
                     .foregroundStyle(accentColor)
             }
             .frame(width: 246, height: 16, alignment: .topLeading)
+            .offset(y: -4)
 
             progressBar
-                .offset(y: 14)
+                .offset(y: 20)
 
             MetricSparklineView(values: history, level: metric.level)
                 .frame(width: 246, height: 31)
-                .offset(y: 24)
+                .offset(y: 32)
 
             if showsDetail {
                 Text(detailText)
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .offset(y: 70)
+                    .offset(y: 76)
             }
         }
         .frame(width: 246, height: 86, alignment: .topLeading)
