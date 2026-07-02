@@ -88,7 +88,7 @@ enum StatusIconRenderer {
 
     private static func drawBar(value: Double, in rect: NSRect) {
         let path = NSBezierPath(rect: rect)
-        NSColor.tertiaryLabelColor.withAlphaComponent(0.5).setFill()
+        NSColor.labelColor.withAlphaComponent(0.26).setFill()
         path.fill()
 
         let fillWidth = max(1, rect.width * value.clamped01)
