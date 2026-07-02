@@ -16,7 +16,7 @@ struct StatusPanelView: View {
                 .offset(x: 24, y: 84 + CGFloat(index * 100))
             }
         }
-        .frame(width: 340, height: 352)
+        .frame(width: 340, height: 352, alignment: .topLeading)
         .background(VisualEffectBackground(material: .popover))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
