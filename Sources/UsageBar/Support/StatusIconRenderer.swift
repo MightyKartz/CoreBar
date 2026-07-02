@@ -124,7 +124,7 @@ enum StatusIconRenderer {
             barHeight = max(2, (3 * scale).rounded())
             barInset = max(1, (1 * scale).rounded())
             let contentHeight = labelHeight + labelBarGap + barHeight
-            let topPadding = max(0, ((thickness - contentHeight) / 2).rounded(.down))
+            let topPadding = max(0, (thickness - contentHeight) / 2)
             barY = topPadding
             labelY = barY + barHeight + labelBarGap
             let width = zip(groupOffsets, groupWidths).map(+).max() ?? 0
