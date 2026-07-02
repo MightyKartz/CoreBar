@@ -1,0 +1,6 @@
+.build/
+dist/
+release/
+.codex/
+.DS_Store
+*.xcuserstate
