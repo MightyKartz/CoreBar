@@ -18,6 +18,7 @@ final class SystemMonitor: ObservableObject {
                 self?.refresh()
             }
         }
+        timer?.tolerance = 0.3
     }
 
     deinit {

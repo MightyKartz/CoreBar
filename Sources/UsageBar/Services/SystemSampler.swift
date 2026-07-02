@@ -2,16 +2,25 @@ import Darwin
 import Foundation
 
 final class SystemSampler {
+    private let diskRefreshInterval: TimeInterval
+    private let diskReader: () -> DiskReading
     private var previousCPUTicks: CPUTicks?
+    private var cachedDisk: DiskReading?
+    private var lastDiskSampleAt: Date?
+
+    init(diskRefreshInterval: TimeInterval = 60, diskReader: @escaping () -> DiskReading = SystemSampler.readDisk) {
+        self.diskRefreshInterval = diskRefreshInterval
+        self.diskReader = diskReader
+    }
 
     func primeCPU() {
         previousCPUTicks = currentCPUTicks()
     }
 
-    func snapshot() -> SystemSnapshot {
+    func snapshot(now: Date = .now) -> SystemSnapshot {
         let cpuUsage = sampleCPUUsage()
         let memory = sampleMemory()
-        let disk = sampleDisk()
+        let disk = sampleDisk(now: now)
 
         return SystemSnapshot(
             cpu: MetricSnapshot(
@@ -50,7 +59,7 @@ final class SystemSampler {
                 freeBytes: disk.free,
                 coreCount: nil
             ),
-            timestamp: .now
+            timestamp: now
         )
     }
 
@@ -129,7 +138,18 @@ final class SystemSampler {
         return MemoryReading(used: used, total: total, pressure: pressure)
     }
 
-    private func sampleDisk() -> DiskReading {
+    private func sampleDisk(now: Date) -> DiskReading {
+        if let cachedDisk, let lastDiskSampleAt, now.timeIntervalSince(lastDiskSampleAt) < diskRefreshInterval {
+            return cachedDisk
+        }
+
+        let disk = diskReader()
+        cachedDisk = disk
+        lastDiskSampleAt = now
+        return disk
+    }
+
+    private static func readDisk() -> DiskReading {
         do {
             let attributes = try FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory())
             let total = (attributes[.systemSize] as? NSNumber)?.uint64Value ?? 0
@@ -163,7 +183,7 @@ private struct MemoryReading {
     let pressure: Double
 }
 
-private struct DiskReading {
+struct DiskReading {
     let free: UInt64
     let total: UInt64
 
