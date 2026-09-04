@@ -37,7 +37,7 @@ struct ClassicPanelBackground: View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
         ZStack {
-            if reduceTransparency {
+            if reduceTransparency || colorSchemeContrast == .increased {
                 shape.fill(Color(nsColor: .windowBackgroundColor))
             } else {
                 // `.popover` tracks light/dark correctly; `.hudWindow` often reads too dark in light mode.
@@ -46,8 +46,8 @@ struct ClassicPanelBackground: View {
                 // Soft light fill so light mode stays bright if vibrancy under-samples.
                 shape.fill(
                     colorScheme == .dark
-                        ? Color.white.opacity(0.04)
-                        : Color.white.opacity(0.55)
+                        ? Color.white.opacity(0.025)
+                        : Color.white.opacity(0.30)
                 )
                 .allowsHitTesting(false)
             }

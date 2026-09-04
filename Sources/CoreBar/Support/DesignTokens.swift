@@ -25,26 +25,27 @@ enum DesignTokens {
     static let gridSpacing: CGFloat = 10
     static let listSpacing: CGFloat = 10
 
-    /// Tile / surface fill. Light = opaque system control fill (no translucency).
+    /// Lightweight tone layered over the panel's single system material.
+    /// These surfaces add hierarchy without stacking another blur effect.
     static func surfaceFill(colorScheme: ColorScheme) -> Color {
         if colorScheme == .dark {
-            return Color.white.opacity(0.08)
+            return Color.white.opacity(0.07)
         }
-        return Color(nsColor: .controlBackgroundColor)
+        return Color.white.opacity(0.38)
     }
 
     static func surfaceStroke(colorScheme: ColorScheme) -> Color {
         if colorScheme == .dark {
-            return Color.white.opacity(0.12)
+            return Color.white.opacity(0.10)
         }
-        return Color(nsColor: .separatorColor)
+        return Color.black.opacity(0.06)
     }
 
     static func surfaceFillStrong(colorScheme: ColorScheme) -> Color {
         if colorScheme == .dark {
             return Color.white.opacity(0.10)
         }
-        return Color(nsColor: .controlBackgroundColor)
+        return Color.white.opacity(0.52)
     }
 
     static let green = Color(red: 52 / 255, green: 199 / 255, blue: 89 / 255)

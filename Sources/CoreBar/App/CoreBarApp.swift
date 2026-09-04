@@ -30,6 +30,7 @@ struct CoreBarApp: App {
 
 struct SettingsView: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @ObservedObject var settings: AppSettings
 
     static let contentSize = NSSize(width: 400, height: 480)
@@ -39,7 +40,7 @@ struct SettingsView: View {
             .padding(16)
             .frame(width: Self.contentSize.width, height: Self.contentSize.height, alignment: .topLeading)
             .background {
-                if reduceTransparency {
+                if reduceTransparency || colorSchemeContrast == .increased {
                     Color(nsColor: .windowBackgroundColor)
                 } else {
                     VisualEffectBackground(material: .sidebar)
@@ -54,6 +55,7 @@ struct SettingsView: View {
 struct SettingsForm: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @ObservedObject var settings: AppSettings
     var compact: Bool = false
     var flat: Bool = false
@@ -175,7 +177,11 @@ struct SettingsForm: View {
                 }
                 .background {
                     RoundedRectangle(cornerRadius: groupRadius, style: .continuous)
-                        .fill(DesignTokens.surfaceFillStrong(colorScheme: colorScheme))
+                        .fill(
+                            reduceTransparency || colorSchemeContrast == .increased
+                                ? Color(nsColor: .controlBackgroundColor)
+                                : DesignTokens.surfaceFillStrong(colorScheme: colorScheme)
+                        )
                 }
                 .overlay {
                     RoundedRectangle(cornerRadius: groupRadius, style: .continuous)
@@ -249,16 +255,35 @@ struct SettingsForm: View {
 /// Preview segmented: soft track + light active pill.
 struct SettingsSegmentedControl<Value: Hashable>: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let options: [(Value, String)]
     @Binding var selection: Value
     var compact: Bool = false
 
+    private var usesSolidContrastStyle: Bool {
+        reduceTransparency || colorSchemeContrast == .increased
+    }
+
     private var trackFill: Color {
-        colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
+        if usesSolidContrastStyle {
+            return Color.primary.opacity(colorScheme == .dark ? 0.18 : 0.12)
+        }
+        return colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
     }
 
     private var activeFill: Color {
-        colorScheme == .dark ? Color.white.opacity(0.16) : Color.white.opacity(0.92)
+        if usesSolidContrastStyle {
+            return Color(nsColor: .windowBackgroundColor)
+        }
+        return colorScheme == .dark ? Color.white.opacity(0.14) : Color.white.opacity(0.58)
+    }
+
+    private var activeStroke: Color {
+        if usesSolidContrastStyle {
+            return Color.primary.opacity(0.48)
+        }
+        return colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
     }
 
     var body: some View {
@@ -280,6 +305,13 @@ struct SettingsSegmentedControl<Value: Hashable>: View {
                             if isSelected {
                                 RoundedRectangle(cornerRadius: compact ? 6 : 7, style: .continuous)
                                     .fill(activeFill)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: compact ? 6 : 7, style: .continuous)
+                                            .strokeBorder(
+                                                activeStroke,
+                                                lineWidth: usesSolidContrastStyle ? 1 : 0.5
+                                            )
+                                    }
                                     .shadow(color: .black.opacity(colorScheme == .dark ? 0.25 : 0.08), radius: 1.5, y: 0.5)
                             }
                         }

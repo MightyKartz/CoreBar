@@ -238,26 +238,26 @@ struct SystemDefaultPanelView: View {
     var body: some View {
         let size = PanelMetricsLayout.systemDefaultPanelSize(settings: settings)
 
-        ZStack {
-            if navigation.page == .overview {
-                ControlCenterPanelView(
-                    monitor: monitor,
-                    settings: settings,
-                    openSettings: navigation.showSettings,
-                    showsChrome: false
-                )
-                .transition(.opacity)
-            } else {
-                StandaloneSettingsPanelView(
-                    settings: settings,
-                    usesExternalSystemChrome: true
-                )
-                .transition(.opacity)
+        SystemDefaultPanelSurface {
+            ZStack {
+                if navigation.page == .overview {
+                    ControlCenterPanelView(
+                        monitor: monitor,
+                        settings: settings,
+                        openSettings: navigation.showSettings,
+                        showsChrome: false
+                    )
+                    .transition(.opacity)
+                } else {
+                    StandaloneSettingsPanelView(
+                        settings: settings,
+                        usesExternalSystemChrome: true
+                    )
+                    .transition(.opacity)
+                }
             }
+            .frame(width: size.width, height: size.height, alignment: .topLeading)
         }
-        .frame(width: size.width, height: size.height, alignment: .topLeading)
-        .background { SystemDefaultPanelChrome() }
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.panelCornerRadius, style: .continuous))
         .animation(.easeOut(duration: reduceMotion ? 0.10 : 0.16), value: navigation.page)
         .onExitCommand(perform: close)
     }
@@ -278,14 +278,15 @@ struct ControlCenterPanelView: View {
         let size = Self.contentSize(settings: settings)
         let metrics = settings.visibleMetrics(from: monitor.snapshot)
 
-        panelContent(metrics: metrics)
-            .frame(width: size.width, height: size.height, alignment: .topLeading)
-            .background {
-                if showsChrome {
-                    SystemDefaultPanelChrome()
-                }
+        if showsChrome {
+            SystemDefaultPanelSurface {
+                panelContent(metrics: metrics)
+                    .frame(width: size.width, height: size.height, alignment: .topLeading)
             }
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.panelCornerRadius, style: .continuous))
+        } else {
+            panelContent(metrics: metrics)
+                .frame(width: size.width, height: size.height, alignment: .topLeading)
+        }
     }
 
     private func panelContent(metrics: [MetricSnapshot]) -> some View {
@@ -365,41 +366,40 @@ struct ControlCenterPanelView: View {
 
 // MARK: - Shared system-default shell (metrics + settings)
 
-/// System Default shell: light = opaque macOS system colors (no translucency); dark = glass/vibrancy.
-struct SystemDefaultPanelChrome: View {
+/// One adaptive, content-bearing system material shared by overview, settings, and About.
+struct SystemDefaultPanelSurface<Content: View>: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: DesignTokens.panelCornerRadius, style: .continuous)
 
-        ZStack {
-            if colorScheme == .light || reduceTransparency {
-                // Opaque system window fill — no vibrancy / glass in light mode.
-                shape.fill(Color(nsColor: .windowBackgroundColor))
-            } else {
-                LiquidGlassBackground(
-                    cornerRadius: DesignTokens.panelCornerRadius,
-                    material: .hudWindow,
-                    showsBorder: false
-                )
-            }
-
+        LiquidGlassSurface(
+            cornerRadius: DesignTokens.panelCornerRadius,
+            material: .popover,
+            showsBorder: false
+        ) {
+            content
+        }
+        .overlay {
             shape.strokeBorder(
                 colorSchemeContrast == .increased
                     ? Color.primary.opacity(0.32)
                     : (colorScheme == .light
                         ? Color(nsColor: .separatorColor)
-                        : Color.primary.opacity(0.12)),
+                        : Color.white.opacity(0.12)),
                 lineWidth: colorSchemeContrast == .increased ? 1 : 0.5
             )
         }
-        .clipShape(shape)
         .shadow(
-            color: Color.black.opacity(colorScheme == .light ? 0.12 : 0.4),
-            radius: colorScheme == .light ? 12 : 18,
-            y: colorScheme == .light ? 4 : 8
+            color: Color.black.opacity(colorScheme == .light ? 0.11 : 0.28),
+            radius: 16,
+            y: 6
         )
     }
 }
@@ -420,7 +420,23 @@ struct StandaloneSettingsPanelView: View {
         settings.panelStyle == .classic
     }
 
+    @ViewBuilder
     var body: some View {
+        if isClassic {
+            panelContent
+                // NSPopover draws the outer frame for Classic.
+                .background(ClassicPanelBackground(showsBorder: false, cornerRadius: 0))
+                .clipShape(Rectangle())
+        } else if usesExternalSystemChrome {
+            panelContent
+        } else {
+            SystemDefaultPanelSurface {
+                panelContent
+            }
+        }
+    }
+
+    private var panelContent: some View {
         // Top-aligned like the metrics panel (same insets / footprint).
         VStack(alignment: .leading, spacing: 0) {
             Text(AppText.settings)
@@ -446,19 +462,6 @@ struct StandaloneSettingsPanelView: View {
         .padding(.horizontal, DesignTokens.panelContentHorizontal)
         .padding(.bottom, DesignTokens.panelContentBottom)
         .frame(width: size.width, height: size.height, alignment: .topLeading)
-        .background {
-            if isClassic {
-                // Same fill as classic metrics; NSPopover draws the system border.
-                ClassicPanelBackground(showsBorder: false, cornerRadius: 0)
-            } else if !usesExternalSystemChrome {
-                // Same shell as System Default metrics (opaque light / glass dark).
-                SystemDefaultPanelChrome()
-            }
-        }
-        .clipShape(RoundedRectangle(
-            cornerRadius: isClassic ? 0 : DesignTokens.panelCornerRadius,
-            style: .continuous
-        ))
     }
 }
 
@@ -481,70 +484,70 @@ struct AboutPanelView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 14) {
-                Image(nsImage: NSApplication.shared.applicationIconImage)
-                    .resizable()
-                    .interpolation(.high)
-                    .frame(width: 58, height: 58)
-                    .accessibilityHidden(true)
+        SystemDefaultPanelSurface {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 14) {
+                    Image(nsImage: NSApplication.shared.applicationIconImage)
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: 58, height: 58)
+                        .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("CoreBar")
-                        .font(.system(size: 20, weight: .semibold))
-                        .tracking(-0.35)
-                    Text(versionText)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("CoreBar")
+                            .font(.system(size: 20, weight: .semibold))
+                            .tracking(-0.35)
+                        Text(versionText)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    PanelIconButton(
+                        systemName: "xmark",
+                        help: AppText.close,
+                        foreground: .secondary,
+                        compact: true,
+                        action: close
+                    )
                 }
 
-                Spacer(minLength: 8)
+                Text(AppText.localOnlyDescription)
+                    .font(.system(size: 12.5, weight: .regular))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 16)
+                    .padding(.bottom, 14)
 
-                PanelIconButton(
-                    systemName: "xmark",
-                    help: AppText.close,
-                    foreground: .secondary,
-                    compact: true,
-                    action: close
-                )
+                VStack(spacing: 8) {
+                    aboutLink(
+                        title: AppText.privacyPolicy,
+                        systemName: "hand.raised",
+                        destination: AppLinks.privacyPolicy
+                    )
+                    aboutLink(
+                        title: AppText.getSupport,
+                        systemName: "questionmark.circle",
+                        destination: AppLinks.support
+                    )
+                }
+
+                Spacer(minLength: 12)
+
+                Text(copyrightText)
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
-
-            Text(AppText.localOnlyDescription)
-                .font(.system(size: 12.5, weight: .regular))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 16)
-                .padding(.bottom, 14)
-
-            VStack(spacing: 8) {
-                aboutLink(
-                    title: AppText.privacyPolicy,
-                    systemName: "hand.raised",
-                    destination: AppLinks.privacyPolicy
-                )
-                aboutLink(
-                    title: AppText.getSupport,
-                    systemName: "questionmark.circle",
-                    destination: AppLinks.support
-                )
-            }
-
-            Spacer(minLength: 12)
-
-            Text(copyrightText)
-                .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(.tertiary)
-                .frame(maxWidth: .infinity, alignment: .center)
+            .padding(20)
+            .frame(
+                width: Self.contentSize.width,
+                height: Self.contentSize.height,
+                alignment: .topLeading
+            )
         }
-        .padding(20)
-        .frame(
-            width: Self.contentSize.width,
-            height: Self.contentSize.height,
-            alignment: .topLeading
-        )
-        .background { SystemDefaultPanelChrome() }
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.panelCornerRadius, style: .continuous))
         .onExitCommand(perform: close)
     }
 

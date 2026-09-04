@@ -127,7 +127,7 @@ struct MetricTileView: View {
 
     @ViewBuilder
     private var tileBackground: some View {
-        if reduceTransparency {
+        if reduceTransparency || colorSchemeContrast == .increased {
             Color(nsColor: .controlBackgroundColor)
         } else {
             DesignTokens.surfaceFill(colorScheme: colorScheme)
@@ -229,7 +229,7 @@ struct NetworkTileView: View {
 
     @ViewBuilder
     private var tileBackground: some View {
-        if reduceTransparency {
+        if reduceTransparency || colorSchemeContrast == .increased {
             Color(nsColor: .controlBackgroundColor)
         } else {
             DesignTokens.surfaceFill(colorScheme: colorScheme)

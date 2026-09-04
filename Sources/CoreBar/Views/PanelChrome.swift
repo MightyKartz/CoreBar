@@ -1,31 +1,49 @@
 import AppKit
 import SwiftUI
 
-/// Liquid-glass / vibrancy background (macOS 26+ glass, else NSVisualEffectView).
-/// - Note: `showsBorder` should be **false** inside `NSPopover` (system already draws a frame);
-///   use **true** on borderless `NSPanel` (System Default).
-struct LiquidGlassBackground: View {
+/// A content-bearing Liquid Glass surface (macOS 26+ glass, else NSVisualEffectView).
+/// Applying glass to the content tree lets the system keep foreground content vibrant;
+/// placing the effect in a sibling background would only render the material itself.
+struct LiquidGlassSurface<Content: View>: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     var cornerRadius: CGFloat
     var material: NSVisualEffectView.Material
     var showsBorder: Bool = true
+    private let content: Content
+
+    init(
+        cornerRadius: CGFloat,
+        material: NSVisualEffectView.Material,
+        showsBorder: Bool = true,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.cornerRadius = cornerRadius
+        self.material = material
+        self.showsBorder = showsBorder
+        self.content = content()
+    }
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
-        ZStack {
-            if reduceTransparency {
-                shape.fill(Color(nsColor: .windowBackgroundColor))
+        Group {
+            if reduceTransparency || colorSchemeContrast == .increased {
+                content
+                    .background(shape.fill(Color(nsColor: .windowBackgroundColor)))
             } else if #available(macOS 26.0, *) {
-                shape
-                    .fill(.clear)
+                content
                     .glassEffect(.regular, in: shape)
             } else {
-                VisualEffectBackground(material: material)
+                content
+                    .background {
+                        VisualEffectBackground(material: material)
+                    }
             }
-
+        }
+        .clipShape(shape)
+        .overlay {
             if showsBorder {
                 shape
                     .strokeBorder(
@@ -34,7 +52,6 @@ struct LiquidGlassBackground: View {
                     )
             }
         }
-        .clipShape(shape)
     }
 }
 
