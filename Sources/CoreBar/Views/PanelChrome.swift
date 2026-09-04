@@ -151,6 +151,7 @@ struct MetricProgressBar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let value: Double
     let color: Color
+    var height: CGFloat = DesignTokens.progressHeight
 
     var body: some View {
         let displayed = value.clamped01
@@ -172,7 +173,7 @@ struct MetricProgressBar: View {
                     .animation(DesignTokens.valueAnimation(reduceMotion: reduceMotion), value: displayed)
             }
         }
-        .frame(height: DesignTokens.progressHeight)
+        .frame(height: height)
     }
 }
 

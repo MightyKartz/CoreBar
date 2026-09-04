@@ -24,7 +24,7 @@ struct VisualEffectBackground: NSViewRepresentable {
     }
 }
 
-/// Classic light/dark surface matching macOS menu / popover chrome.
+/// Classic surface that lets NSPopover own the material instead of stacking another blur.
 struct ClassicPanelBackground: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
@@ -39,17 +39,21 @@ struct ClassicPanelBackground: View {
         ZStack {
             if reduceTransparency || colorSchemeContrast == .increased {
                 shape.fill(Color(nsColor: .windowBackgroundColor))
-            } else {
-                // `.popover` tracks light/dark correctly; `.hudWindow` often reads too dark in light mode.
-                VisualEffectBackground(material: .popover, blendingMode: .withinWindow, isEmphasized: true)
+            } else if showsBorder {
+                // Borderless hosts need exactly one material layer of their own.
+                VisualEffectBackground(material: .popover, blendingMode: .behindWindow, isEmphasized: true)
 
-                // Soft light fill so light mode stays bright if vibrancy under-samples.
+                // A borderless host has no system Popover beneath it, so retain a
+                // subtle veil to stabilize foreground contrast.
                 shape.fill(
                     colorScheme == .dark
-                        ? Color.white.opacity(0.025)
-                        : Color.white.opacity(0.30)
+                        ? Color.white.opacity(0.018)
+                        : Color.white.opacity(0.12)
                 )
                 .allowsHitTesting(false)
+            } else {
+                // NSPopover supplies the material, border, arrow, and shadow.
+                Color.clear
             }
 
             if showsBorder {

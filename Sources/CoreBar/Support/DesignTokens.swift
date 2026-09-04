@@ -19,9 +19,11 @@ enum DesignTokens {
     static let settingsGroupRadius: CGFloat = 16
     static let progressHeight: CGFloat = 4
     static let iconContainer: CGFloat = 28
+    static let classicIconContainer: CGFloat = 26
+    static let classicProgressHeight: CGFloat = 3
     static let tileMinHeight: CGFloat = 132
-    /// Flat classic list row (no card chrome).
-    static let classicRowMinHeight: CGFloat = 88
+    /// Compact flat classic list row (one supporting visualization, no card chrome).
+    static let classicRowMinHeight: CGFloat = 78
     static let gridSpacing: CGFloat = 10
     static let listSpacing: CGFloat = 10
 

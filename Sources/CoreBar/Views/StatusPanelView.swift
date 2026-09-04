@@ -128,6 +128,7 @@ struct OverviewPanelHeader: View {
 // MARK: - Classic panel (vertical list, System Default color language)
 
 struct StatusPanelView: View {
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @ObservedObject var monitor: SystemMonitor
     @ObservedObject var settings: AppSettings
     let openSettings: () -> Void
@@ -155,8 +156,10 @@ struct StatusPanelView: View {
                         history: monitor.history.values(for: metric.kind),
                         usesThresholdColors: settings.useThresholdColors
                     )
-                    if index < metrics.count - 1 || networkShown {
-                        classicRowDivider
+                    .overlay(alignment: .bottom) {
+                        if index < metrics.count - 1 || networkShown {
+                            classicRowDivider
+                        }
                     }
                 }
 
@@ -183,15 +186,18 @@ struct StatusPanelView: View {
         .padding(.horizontal, DesignTokens.panelContentHorizontal)
         .padding(.bottom, DesignTokens.panelContentBottom)
         .frame(width: size.width, height: size.height, alignment: .topLeading)
-        // NSPopover owns the outer chrome; fill with light-correct popover material (no second border).
+        // Keep content transparent so NSPopover owns the material, border, arrow, and shadow.
         .background(ClassicPanelBackground(showsBorder: false, cornerRadius: 0))
     }
 
     private var classicRowDivider: some View {
         Rectangle()
-            .fill(Color.primary.opacity(0.08))
-            .frame(height: 0.5)
-            .padding(.leading, DesignTokens.iconContainer + 10)
+            .fill(
+                Color(nsColor: .separatorColor)
+                    .opacity(colorSchemeContrast == .increased ? 1 : 0.55)
+            )
+            .frame(height: colorSchemeContrast == .increased ? 1 : 0.5)
+            .padding(.leading, DesignTokens.classicIconContainer + 9)
     }
 
     private var header: some View {
@@ -426,7 +432,6 @@ struct StandaloneSettingsPanelView: View {
             panelContent
                 // NSPopover draws the outer frame for Classic.
                 .background(ClassicPanelBackground(showsBorder: false, cornerRadius: 0))
-                .clipShape(Rectangle())
         } else if usesExternalSystemChrome {
             panelContent
         } else {

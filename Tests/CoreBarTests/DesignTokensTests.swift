@@ -47,6 +47,15 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(DesignTokens.panelCornerRadius, 28)
         XCTAssertEqual(DesignTokens.tileCornerRadius, 22)
         XCTAssertEqual(DesignTokens.progressHeight, 4)
+        XCTAssertEqual(DesignTokens.classicRowMinHeight, 78)
+        XCTAssertEqual(DesignTokens.classicProgressHeight, 3)
+    }
+
+    func testClassicMetricsUseOneSupportingVisualization() {
+        XCTAssertEqual(ClassicMetricVisualization(kind: .cpu), .sparkline)
+        XCTAssertEqual(ClassicMetricVisualization(kind: .memory), .progress)
+        XCTAssertEqual(ClassicMetricVisualization(kind: .disk), .progress)
+        XCTAssertEqual(ClassicMetricVisualization(kind: .network), .sparkline)
     }
 
     func testAdaptiveMetricGridUsesIntentionalSingletonRows() {
@@ -96,6 +105,34 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(
             system.height,
             PanelMetricsLayout.controlCenterIntrinsicHeight(settings: settings)
+        )
+    }
+
+    @MainActor
+    func testClassicPanelHeightTracksVisibleRows() {
+        let suite = "CoreBarTests.ClassicSize.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let settings = AppSettings(defaults: defaults, appliesSystemAppearance: false)
+        settings.panelStyle = .classic
+        settings.showCPU = true
+        settings.showMemory = false
+        settings.showDisk = false
+        settings.showNetwork = false
+        let oneRow = StatusPanelView.contentSize(settings: settings)
+
+        settings.showMemory = true
+        settings.showDisk = true
+        settings.showNetwork = true
+        let fourRows = StatusPanelView.contentSize(settings: settings)
+
+        XCTAssertEqual(oneRow.width, DesignTokens.panelWidth)
+        XCTAssertEqual(fourRows.width, oneRow.width)
+        XCTAssertEqual(
+            fourRows.height - oneRow.height,
+            3 * DesignTokens.classicRowMinHeight,
+            accuracy: 0.001
         )
     }
 

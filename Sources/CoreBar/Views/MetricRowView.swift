@@ -1,5 +1,20 @@
 import SwiftUI
 
+/// Classic rows stay compact by showing one supporting visual per metric.
+enum ClassicMetricVisualization: Equatable {
+    case sparkline
+    case progress
+
+    init(kind: MetricKind) {
+        switch kind {
+        case .cpu, .network:
+            self = .sparkline
+        case .memory, .disk:
+            self = .progress
+        }
+    }
+}
+
 /// Classic list row — flat (no per-metric glass “cells”), continuous panel surface.
 struct MetricRowView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -21,8 +36,8 @@ struct MetricRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .center, spacing: 10) {
-                iconBadge
+            HStack(alignment: .center, spacing: 9) {
+                ClassicMetricIcon(systemName: symbolName, accent: accentColor)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(AppText.metricTitle(metric.kind))
@@ -45,27 +60,32 @@ struct MetricRowView: View {
                     .animation(DesignTokens.valueAnimation(reduceMotion: reduceMotion), value: metric.value)
             }
 
-            MetricProgressBar(value: metric.value, color: accentColor)
+            visualization
+        }
+        .padding(.vertical, 9)
+        .frame(maxWidth: .infinity, minHeight: DesignTokens.classicRowMinHeight, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(AppText.metricTitle(metric.kind)), \(metric.value.percentText), \(compactDetailText)")
+    }
 
+    @ViewBuilder
+    private var visualization: some View {
+        switch ClassicMetricVisualization(kind: metric.kind) {
+        case .sparkline:
             MetricSparklineView(
                 values: history,
                 color: accentColor,
-                showsArea: true
+                showsArea: false
             )
-            .frame(height: 24)
+            .frame(height: 22)
+        case .progress:
+            MetricProgressBar(
+                value: metric.value,
+                color: accentColor,
+                height: DesignTokens.classicProgressHeight
+            )
+            .frame(height: 22)
         }
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, minHeight: DesignTokens.classicRowMinHeight, alignment: .leading)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(AppText.metricTitle(metric.kind)), \(metric.value.percentText)")
-    }
-
-    private var iconBadge: some View {
-        Image(systemName: symbolName)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(accentColor)
-            .frame(width: DesignTokens.iconContainer, height: DesignTokens.iconContainer)
-            .background(accentColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private var symbolName: String {
@@ -118,12 +138,8 @@ struct NetworkRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .center, spacing: 10) {
-                Image(systemName: "waveform.path.ecg")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(accent)
-                    .frame(width: DesignTokens.iconContainer, height: DesignTokens.iconContainer)
-                    .background(accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            HStack(alignment: .center, spacing: 9) {
+                ClassicMetricIcon(systemName: "waveform.path.ecg", accent: accent)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(AppText.metricTitle(.network))
@@ -151,13 +167,36 @@ struct NetworkRowView: View {
                 values: history,
                 color: accent,
                 fixedRange: nil,
-                showsArea: true
+                showsArea: false
             )
-            .frame(height: 26)
+            .frame(height: 22)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 9)
         .frame(maxWidth: .infinity, minHeight: DesignTokens.classicRowMinHeight, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(AppText.metricTitle(.network)), \(ratesDetail)")
+    }
+}
+
+private struct ClassicMetricIcon: View {
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+    let systemName: String
+    let accent: Color
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 7, style: .continuous)
+
+        Image(systemName: systemName)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(accent)
+            .frame(width: DesignTokens.classicIconContainer, height: DesignTokens.classicIconContainer)
+            .background(accent.opacity(0.09), in: shape)
+            .overlay {
+                shape.strokeBorder(
+                    Color.primary.opacity(colorSchemeContrast == .increased ? 0.22 : 0.05),
+                    lineWidth: colorSchemeContrast == .increased ? 1 : 0.5
+                )
+            }
+            .accessibilityHidden(true)
     }
 }

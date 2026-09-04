@@ -116,6 +116,10 @@ final class StatusItemController: NSObject {
     /// Keep open panels sized/presented correctly after settings edits (without recreating hosts needlessly).
     private func refreshOpenSurfaces() {
         update(with: monitor.snapshot)
+        // These Popovers receive an explicit appearance when configured, so keep
+        // that override synchronized while the user switches appearance in-place.
+        popover.appearance = NSApp.appearance
+        settingsPopover.appearance = NSApp.appearance
 
         let style = settings.panelStyle
         let settingsSize = Self.settingsPanelSize(settings: settings)
