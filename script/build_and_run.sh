@@ -3,7 +3,7 @@ set -euo pipefail
 
 MODE="${1:-run}"
 APP_NAME="CoreBar"
-BUNDLE_ID="${BUNDLE_ID:-com.mightykartz.corebar}"
+BUNDLE_ID="${BUNDLE_ID:-com.mightykartz.usagebar}"
 VERSION="${VERSION:-0.1.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-}"

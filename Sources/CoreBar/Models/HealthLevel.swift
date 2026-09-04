@@ -34,18 +34,10 @@ enum HealthLevel: Int, Comparable {
     }
 
     var color: Color {
-        switch self {
-        case .normal: .green
-        case .warning: .yellow
-        case .critical: .red
-        }
+        DesignTokens.color(for: self)
     }
 
     var nsColor: NSColor {
-        switch self {
-        case .normal: .systemGreen
-        case .warning: .systemYellow
-        case .critical: .systemRed
-        }
+        DesignTokens.nsColor(for: self)
     }
 }

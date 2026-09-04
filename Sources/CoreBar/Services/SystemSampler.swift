@@ -4,13 +4,21 @@ import Foundation
 final class SystemSampler {
     private let diskRefreshInterval: TimeInterval
     private let diskReader: () -> DiskReading
+    private let networkReader: () -> NetworkCounters
     private var previousCPUTicks: CPUTicks?
     private var cachedDisk: DiskReading?
     private var lastDiskSampleAt: Date?
+    private var previousNetworkCounters: NetworkCounters?
+    private var previousNetworkSampleAt: Date?
 
-    init(diskRefreshInterval: TimeInterval = 60, diskReader: @escaping () -> DiskReading = SystemSampler.readDisk) {
+    init(
+        diskRefreshInterval: TimeInterval = 60,
+        diskReader: @escaping () -> DiskReading = SystemSampler.readDisk,
+        networkReader: @escaping () -> NetworkCounters = SystemSampler.readNetworkCounters
+    ) {
         self.diskRefreshInterval = diskRefreshInterval
         self.diskReader = diskReader
+        self.networkReader = networkReader
     }
 
     func primeCPU() {
@@ -21,6 +29,7 @@ final class SystemSampler {
         let cpuUsage = sampleCPUUsage()
         let memory = sampleMemory()
         let disk = sampleDisk(now: now)
+        let network = sampleNetwork(now: now)
 
         return SystemSnapshot(
             cpu: MetricSnapshot(
@@ -40,11 +49,11 @@ final class SystemSampler {
                 title: "Memory",
                 symbol: "memorychip",
                 value: memory.pressure,
-                detail: "\(memory.used.byteText) active of \(memory.total.byteText)",
+                detail: "\(memory.used.memoryByteText) active of \(memory.total.memoryByteText)",
                 level: HealthRules.level(for: memory.pressure),
                 usedBytes: memory.used,
                 totalBytes: memory.total,
-                freeBytes: memory.total - memory.used,
+                freeBytes: memory.total > memory.used ? memory.total - memory.used : 0,
                 coreCount: nil
             ),
             disk: MetricSnapshot(
@@ -59,6 +68,7 @@ final class SystemSampler {
                 freeBytes: disk.free,
                 coreCount: nil
             ),
+            network: network,
             timestamp: now
         )
     }
@@ -133,7 +143,7 @@ final class SystemSampler {
         // ponytail: approximates Activity Monitor pressure with public vm stats; replace if Apple exposes a direct API.
         let releasablePages = UInt64(stats.free_count + stats.inactive_count + stats.speculative_count + stats.purgeable_count + stats.compressor_page_count)
         let releasable = min(total, releasablePages * pageBytes)
-        let pressure = (1 - (Double(releasable) / Double(total))).clamped01
+        let pressure = total > 0 ? (1 - (Double(releasable) / Double(total))).clamped01 : 0
 
         return MemoryReading(used: used, total: total, pressure: pressure)
     }
@@ -163,6 +173,74 @@ final class SystemSampler {
         } catch {
             return DiskReading(free: 0, total: 0)
         }
+    }
+
+    private func sampleNetwork(now: Date) -> NetworkSnapshot {
+        let counters = networkReader()
+
+        defer {
+            previousNetworkCounters = counters
+            previousNetworkSampleAt = now
+        }
+
+        guard let previousNetworkCounters, let previousNetworkSampleAt else {
+            return .zero
+        }
+
+        let elapsed = now.timeIntervalSince(previousNetworkSampleAt)
+        guard elapsed > 0 else {
+            return .zero
+        }
+
+        let receivedDelta = counters.receivedBytes >= previousNetworkCounters.receivedBytes
+            ? counters.receivedBytes - previousNetworkCounters.receivedBytes
+            : 0
+        let transmittedDelta = counters.transmittedBytes >= previousNetworkCounters.transmittedBytes
+            ? counters.transmittedBytes - previousNetworkCounters.transmittedBytes
+            : 0
+
+        return NetworkSnapshot(
+            downloadBytesPerSecond: Double(receivedDelta) / elapsed,
+            uploadBytesPerSecond: Double(transmittedDelta) / elapsed
+        )
+    }
+
+    private static func readNetworkCounters() -> NetworkCounters {
+        var interfaces: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&interfaces) == 0, let firstInterface = interfaces else {
+            return .zero
+        }
+
+        defer {
+            freeifaddrs(interfaces)
+        }
+
+        var counters = NetworkCounters.zero
+        var pointer: UnsafeMutablePointer<ifaddrs>? = firstInterface
+
+        while let current = pointer {
+            defer {
+                pointer = current.pointee.ifa_next
+            }
+
+            let interface = current.pointee
+            let flags = Int32(interface.ifa_flags)
+            guard
+                flags & IFF_UP != 0,
+                flags & IFF_LOOPBACK == 0,
+                let address = interface.ifa_addr,
+                address.pointee.sa_family == UInt8(AF_LINK),
+                let data = interface.ifa_data
+            else {
+                continue
+            }
+
+            let networkData = data.assumingMemoryBound(to: if_data.self).pointee
+            counters.receivedBytes += UInt64(networkData.ifi_ibytes)
+            counters.transmittedBytes += UInt64(networkData.ifi_obytes)
+        }
+
+        return counters
     }
 }
 
@@ -194,4 +272,11 @@ struct DiskReading {
 
         return (Double(total - free) / Double(total)).clamped01
     }
+}
+
+struct NetworkCounters {
+    var receivedBytes: UInt64
+    var transmittedBytes: UInt64
+
+    static let zero = NetworkCounters(receivedBytes: 0, transmittedBytes: 0)
 }
