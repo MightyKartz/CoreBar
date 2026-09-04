@@ -2,7 +2,7 @@
 
 [中文说明](README.zh-CN.md)
 
-CoreBar is a quiet macOS menu bar monitor for CPU, memory, and disk usage. It stays compact in the menu bar, keeps its background presence light, and shows exact numbers only when you click.
+CoreBar is a quiet macOS menu bar monitor for CPU, memory, disk, and network activity. It stays compact in the menu bar, keeps its background presence light, and shows exact numbers only when you click.
 
 ![CoreBar menu bar preview](docs/images/menu-bar-preview.svg)
 
@@ -10,6 +10,9 @@ CoreBar is a quiet macOS menu bar monitor for CPU, memory, and disk usage. It st
 
 - CPU, memory, and disk usage in one native menu bar item.
 - Compact labels with slim usage bars, tuned for light and dark mode.
+- Current download and upload speed in the detail panel.
+- Classic and System Default-style panels.
+- A settings window for launch at login, refresh interval, visible metrics, panel style, and threshold colors.
 - A glass-style popover with exact used, free, and total values.
 - 60-second mini history sparklines for quick trend checks.
 - Automatic English or Chinese UI based on your system language.

@@ -9,7 +9,10 @@
 /* Begin PBXBuildFile section */
 		13299CCA8FAC5D69251A65A6 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8539E2EBADC9C84B380ADFF0 /* Cocoa.framework */; };
 		144B02C16AFA997E56B088D7 /* StatusIconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC17D556B8A27D13EE9E15F /* StatusIconRenderer.swift */; };
+		F72AB8F3EADD44F7B9D4CAEC /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7671D7AC71B34AEAB4F4CFFE /* DesignTokens.swift */; };
 		21A4ACB676E9DC20B33C5A6D /* MetricSparklineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 613FA0E0F8F6B82E2F89AC38 /* MetricSparklineView.swift */; };
+		7C96487778784791BC019A75 /* MetricTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 621F667A5DA34A5689FD7AEC /* MetricTileView.swift */; };
+		C86FB67C20DD4CD48F7ED406 /* PanelChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBEDF122E1C4659ADBD5A01 /* PanelChrome.swift */; };
 		2E24F729033C4765233A454B /* SystemSamplerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F7D5870CEE74FEB8B97E90 /* SystemSamplerTests.swift */; };
 		30BCD1B3D3279205361E2CF5 /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BDD9E831AE2621E2813E7FA /* Formatters.swift */; };
 		31CB7610EF1AE5003B0093C8 /* SystemSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32DE4CEC811B0B31308384A9 /* SystemSnapshot.swift */; };
@@ -20,6 +23,9 @@
 		71CA8450B1C692999C7934FA /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28B85CB98F78E866FF6C5E2 /* SystemMonitor.swift */; };
 		73538723CA81CE65779555C2 /* StatusPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1752A145755E9F8C8668A0D5 /* StatusPanelView.swift */; };
 		8B385BC615663C9296F6FA49 /* AppTextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB74F3CD8D1DDCAE9BA76454 /* AppTextTests.swift */; };
+		E0145EC41414433F9D349E1B /* DesignTokensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1D492DFBDE4058A83424C6 /* DesignTokensTests.swift */; };
+		C4769BD3CA494DFA82A16D91 /* FormattersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 347FACB4F86B47968D5FE497 /* FormattersTests.swift */; };
+		DA1BE087F82C4ED99928E028 /* MetricSparklineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F6EC361216470DBBEF3B31 /* MetricSparklineTests.swift */; };
 		93723D320E6CB23F7450263D /* MetricRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C65869B8337C1ED120DEC20D /* MetricRowView.swift */; };
 		960A718B91ACF10D16756F55 /* HealthRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E90B154D7E452A813F5E8C3A /* HealthRulesTests.swift */; };
 		9DC6EE477A62B24EFA5A7A31 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8539E2EBADC9C84B380ADFF0 /* Cocoa.framework */; };
@@ -52,6 +58,9 @@
 		49CB0874FDA1F99B306BBB7B /* StatusItemController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
 		50F7D5870CEE74FEB8B97E90 /* SystemSamplerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SystemSamplerTests.swift; sourceTree = "<group>"; };
 		613FA0E0F8F6B82E2F89AC38 /* MetricSparklineView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MetricSparklineView.swift; sourceTree = "<group>"; };
+		621F667A5DA34A5689FD7AEC /* MetricTileView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MetricTileView.swift; sourceTree = "<group>"; };
+		7671D7AC71B34AEAB4F4CFFE /* DesignTokens.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		ACBEDF122E1C4659ADBD5A01 /* PanelChrome.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PanelChrome.swift; sourceTree = "<group>"; };
 		6B5419137F2760E302948D8D /* HealthLevel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HealthLevel.swift; sourceTree = "<group>"; };
 		7BDD9E831AE2621E2813E7FA /* Formatters.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
 		8539E2EBADC9C84B380ADFF0 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
@@ -65,6 +74,9 @@
 		DE2568541235B1006E105552 /* CoreBarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CoreBarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E90B154D7E452A813F5E8C3A /* HealthRulesTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HealthRulesTests.swift; sourceTree = "<group>"; };
 		EB74F3CD8D1DDCAE9BA76454 /* AppTextTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppTextTests.swift; sourceTree = "<group>"; };
+		6B1D492DFBDE4058A83424C6 /* DesignTokensTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DesignTokensTests.swift; sourceTree = "<group>"; };
+		347FACB4F86B47968D5FE497 /* FormattersTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FormattersTests.swift; sourceTree = "<group>"; };
+		03F6EC361216470DBBEF3B31 /* MetricSparklineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MetricSparklineTests.swift; sourceTree = "<group>"; };
 		F428D487FFD2E12821CAB523 /* HealthRules.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HealthRules.swift; sourceTree = "<group>"; };
 		F4BF8F708EAD074685C2B449 /* VisualEffectBackground.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VisualEffectBackground.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -156,8 +168,11 @@
 			isa = PBXGroup;
 			children = (
 				EB74F3CD8D1DDCAE9BA76454 /* AppTextTests.swift */,
+				6B1D492DFBDE4058A83424C6 /* DesignTokensTests.swift */,
+				347FACB4F86B47968D5FE497 /* FormattersTests.swift */,
 				E90B154D7E452A813F5E8C3A /* HealthRulesTests.swift */,
 				8B82057A0968395A1CFD9A58 /* MetricHistoryTests.swift */,
+				03F6EC361216470DBBEF3B31 /* MetricSparklineTests.swift */,
 				2702F7CB9FF89DCCCA9A7AC6 /* StatusIconRendererTests.swift */,
 				50F7D5870CEE74FEB8B97E90 /* SystemSamplerTests.swift */,
 			);
@@ -177,6 +192,7 @@
 			isa = PBXGroup;
 			children = (
 				A8A32C9E54D90079F44B5B2A /* AppText.swift */,
+				7671D7AC71B34AEAB4F4CFFE /* DesignTokens.swift */,
 				7BDD9E831AE2621E2813E7FA /* Formatters.swift */,
 				F428D487FFD2E12821CAB523 /* HealthRules.swift */,
 				2AC17D556B8A27D13EE9E15F /* StatusIconRenderer.swift */,
@@ -210,6 +226,8 @@
 			children = (
 				C65869B8337C1ED120DEC20D /* MetricRowView.swift */,
 				613FA0E0F8F6B82E2F89AC38 /* MetricSparklineView.swift */,
+				621F667A5DA34A5689FD7AEC /* MetricTileView.swift */,
+				ACBEDF122E1C4659ADBD5A01 /* PanelChrome.swift */,
 				1752A145755E9F8C8668A0D5 /* StatusPanelView.swift */,
 				F4BF8F708EAD074685C2B449 /* VisualEffectBackground.swift */,
 			);
@@ -321,11 +339,14 @@
 				71CA8450B1C692999C7934FA /* SystemMonitor.swift in Sources */,
 				CCBEB3BABD94A116818F27C9 /* SystemSampler.swift in Sources */,
 				B9F2C5295ACFBE8A8EDB04CD /* AppText.swift in Sources */,
+				F72AB8F3EADD44F7B9D4CAEC /* DesignTokens.swift in Sources */,
 				30BCD1B3D3279205361E2CF5 /* Formatters.swift in Sources */,
 				F06CF7F9831A93EC49FAA081 /* HealthRules.swift in Sources */,
 				144B02C16AFA997E56B088D7 /* StatusIconRenderer.swift in Sources */,
 				93723D320E6CB23F7450263D /* MetricRowView.swift in Sources */,
 				21A4ACB676E9DC20B33C5A6D /* MetricSparklineView.swift in Sources */,
+				7C96487778784791BC019A75 /* MetricTileView.swift in Sources */,
+				C86FB67C20DD4CD48F7ED406 /* PanelChrome.swift in Sources */,
 				73538723CA81CE65779555C2 /* StatusPanelView.swift in Sources */,
 				4AAD5D4EA4093493BBDAC899 /* VisualEffectBackground.swift in Sources */,
 			);
@@ -336,8 +357,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				8B385BC615663C9296F6FA49 /* AppTextTests.swift in Sources */,
+				E0145EC41414433F9D349E1B /* DesignTokensTests.swift in Sources */,
+				C4769BD3CA494DFA82A16D91 /* FormattersTests.swift in Sources */,
 				960A718B91ACF10D16756F55 /* HealthRulesTests.swift in Sources */,
 				402D9E705C7FB38A8265C2E7 /* MetricHistoryTests.swift in Sources */,
+				DA1BE087F82C4ED99928E028 /* MetricSparklineTests.swift in Sources */,
 				C5F15BFF04697339285ADCE8 /* StatusIconRendererTests.swift in Sources */,
 				2E24F729033C4765233A454B /* SystemSamplerTests.swift in Sources */,
 			);
@@ -421,7 +445,7 @@
 				CODE_SIGN_ENTITLEMENTS = CoreBar/CoreBar.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = J6P96F432P;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -449,7 +473,7 @@
 				CODE_SIGN_ENTITLEMENTS = CoreBar/CoreBar.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = J6P96F432P;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -477,7 +501,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = J6P96F432P;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -567,7 +591,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = J6P96F432P;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
