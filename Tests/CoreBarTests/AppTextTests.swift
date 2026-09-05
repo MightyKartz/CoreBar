@@ -2,17 +2,31 @@ import XCTest
 @testable import CoreBar
 
 final class AppTextTests: XCTestCase {
-    func testDetectsChineseFromLocaleOrPreferredLanguages() {
+    func testLanguageFollowsFirstSupportedPreferenceBeforeRegionalLocale() {
+        XCTAssertFalse(AppText.isChinese(localeIdentifier: "zh-Hans_CN", preferredLanguages: ["en-US", "zh-Hans"]))
+        XCTAssertTrue(AppText.isChinese(localeIdentifier: "en_US", preferredLanguages: ["zh-Hant-TW", "en-US"]))
+        XCTAssertFalse(AppText.isChinese(localeIdentifier: "zh_CN", preferredLanguages: ["fr-FR", "en-GB", "zh-Hans"]))
+        XCTAssertTrue(AppText.isChinese(localeIdentifier: "en_US", preferredLanguages: ["fr-FR", "zh_Hans", "en-US"]))
+    }
+
+    func testLanguageFallsBackToLocaleWhenPreferencesAreUnsupportedOrMissing() {
         XCTAssertTrue(AppText.isChinese(localeIdentifier: "zh-Hans_CN", preferredLanguages: []))
-        XCTAssertTrue(AppText.isChinese(localeIdentifier: "en_US", preferredLanguages: ["zh-Hant-TW"]))
+        XCTAssertTrue(AppText.isChinese(localeIdentifier: "zh-Hant_TW", preferredLanguages: ["ja-JP"]))
+        XCTAssertFalse(AppText.isChinese(localeIdentifier: "en_US", preferredLanguages: ["fr-FR"]))
         XCTAssertFalse(AppText.isChinese(localeIdentifier: "en_US", preferredLanguages: ["en-US"]))
+        XCTAssertFalse(AppText.isChinese(localeIdentifier: "", preferredLanguages: []))
+    }
+
+    func testLanguageCodeMatchingIsCaseInsensitiveAndRequiresWholeCode() {
+        XCTAssertTrue(AppText.isChinese(localeIdentifier: "en_US", preferredLanguages: ["ZH-hans"]))
+        XCTAssertFalse(AppText.isChinese(localeIdentifier: "en_US", preferredLanguages: ["zhong", "en-US"]))
     }
 
     func testHealthPillAndNetworkCopyBranches() {
         XCTAssertEqual(AppText.choose(en: "OK", zh: "良好", isChinese: true), "良好")
         XCTAssertEqual(AppText.choose(en: "OK", zh: "良好", isChinese: false), "OK")
         XCTAssertEqual(AppText.choose(en: "Watch", zh: "注意", isChinese: true), "注意")
-        XCTAssertEqual(AppText.choose(en: "Hot", zh: "严重", isChinese: false), "Hot")
+        XCTAssertEqual(AppText.choose(en: "Critical", zh: "严重", isChinese: false), "Critical")
         XCTAssertEqual(AppText.choose(en: "Down", zh: "下载", isChinese: true), "下载")
         XCTAssertEqual(AppText.choose(en: "Up", zh: "上传", isChinese: false), "Up")
         XCTAssertEqual(AppText.choose(en: "Live", zh: "实时", isChinese: true), "实时")

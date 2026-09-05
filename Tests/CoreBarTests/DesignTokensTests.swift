@@ -47,7 +47,7 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(DesignTokens.panelCornerRadius, 28)
         XCTAssertEqual(DesignTokens.tileCornerRadius, 22)
         XCTAssertEqual(DesignTokens.progressHeight, 4)
-        XCTAssertEqual(DesignTokens.classicRowMinHeight, 78)
+        XCTAssertEqual(DesignTokens.classicRowMinHeight, 96)
         XCTAssertEqual(DesignTokens.classicProgressHeight, 3)
     }
 
@@ -74,38 +74,41 @@ final class DesignTokensTests: XCTestCase {
     }
 
     @MainActor
-    func testSystemDefaultOverviewAndSettingsShareStableSize() {
+    func testCardOverviewUsesRowCountWhileSettingsKeepTheirOwnSize() {
         let suite = "CoreBarTests.Size.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-
         let settings = AppSettings(defaults: defaults, appliesSystemAppearance: false)
-        settings.showCPU = true
-        settings.showMemory = true
+        let settingsSize = StatusItemController.settingsPanelSize(settings: settings)
+
+        settings.showMemory = false
         settings.showDisk = false
         settings.showNetwork = false
-        let two = ControlCenterPanelView.contentSize(settings: settings)
-
-        settings.showDisk = true
+        let one = ControlCenterPanelView.contentSize(settings: settings)
         settings.showNetwork = true
+        let two = ControlCenterPanelView.contentSize(settings: settings)
+        settings.showMemory = true
+        let three = ControlCenterPanelView.contentSize(settings: settings)
+        settings.showDisk = true
         let four = ControlCenterPanelView.contentSize(settings: settings)
 
-        XCTAssertEqual(two.width, DesignTokens.panelWidth)
-        XCTAssertEqual(four.width, DesignTokens.panelWidth)
-        // System Default keeps one footprint while switching between overview and settings.
-        XCTAssertEqual(four.height, two.height)
-        XCTAssertGreaterThanOrEqual(two.width, 360)
-        XCTAssertLessThanOrEqual(two.width, 380)
+        XCTAssertEqual(one, two)
+        XCTAssertEqual(three, four)
+        XCTAssertLessThan(two.height, four.height)
+        XCTAssertLessThan(one.height, settingsSize.height)
+        XCTAssertEqual(one.width, settingsSize.width)
+        XCTAssertEqual(four.width, settingsSize.width)
+        XCTAssertEqual(StatusItemController.settingsPanelSize(settings: settings), settingsSize)
 
-        // The shared size is large enough for the full grid and exactly matches settings.
-        let system = ControlCenterPanelView.contentSize(settings: settings)
-        settings.panelStyle = .controlCenter
-        let settingsForSystem = StatusItemController.settingsPanelSize(settings: settings)
-        XCTAssertEqual(system, settingsForSystem)
-        XCTAssertGreaterThanOrEqual(
-            system.height,
-            PanelMetricsLayout.controlCenterIntrinsicHeight(settings: settings)
-        )
+        let navigation = SystemPanelNavigationModel()
+        navigation.showSettings()
+        XCTAssertEqual(PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page), settingsSize)
+        settings.showMemory = false
+        settings.showDisk = false
+        settings.showNetwork = false
+        XCTAssertEqual(PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page), settingsSize)
+        navigation.showOverview()
+        XCTAssertEqual(PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page), one)
     }
 
     @MainActor

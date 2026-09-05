@@ -45,10 +45,11 @@ struct MetricRowView: View {
                         .foregroundStyle(.primary)
 
                     Text(compactDetailText)
-                        .font(.system(size: 10.5, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .help(compactDetailText)
                 }
 
                 Spacer(minLength: 8)
@@ -66,6 +67,7 @@ struct MetricRowView: View {
         .frame(maxWidth: .infinity, minHeight: DesignTokens.classicRowMinHeight, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(AppText.metricTitle(metric.kind)), \(metric.value.percentText), \(compactDetailText)")
+        .accessibilityHint(metric.kind == .cpu ? AppText.recentSamplesHint : "")
     }
 
     @ViewBuilder
@@ -108,10 +110,10 @@ struct MetricRowView: View {
             }
             return "\(AppText.used) \(used.memoryByteText) / \(total.memoryByteText)"
         case .disk:
-            guard let used = metric.usedBytes, let free = metric.freeBytes else {
+            guard let free = metric.freeBytes, let total = metric.totalBytes else {
                 return AppText.waiting
             }
-            return "\(AppText.used) \(used.byteText) · \(AppText.free) \(free.byteText)"
+            return "\(AppText.free) \(free.byteText) · \(AppText.totalCapacity) \(total.byteText)"
         case .network:
             return AppText.waiting
         }
@@ -146,35 +148,45 @@ struct NetworkRowView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.primary)
 
-                    Text(ratesDetail)
-                        .font(.system(size: 10.5, weight: .medium).monospacedDigit())
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(AppText.download) \(network.downloadBytesPerSecond.byteRateText)")
+                        Text("\(AppText.upload) \(network.uploadBytesPerSecond.byteRateText)")
+                    }
+                    .font(.system(size: 12, weight: .medium).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.9)
                 }
 
                 Spacer(minLength: 8)
 
-                Text(totalRate.byteRateText)
-                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(.primary)
-                    .contentTransition(reduceMotion ? .identity : .numericText(value: totalRate))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(AppText.combinedTraffic)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    Text(totalRate.byteRateText)
+                        .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                        .foregroundStyle(.primary)
+                        .contentTransition(reduceMotion ? .identity : .numericText(value: totalRate))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
             }
 
             MetricSparklineView(
                 values: history,
                 color: accent,
                 fixedRange: nil,
-                showsArea: false
+                showsArea: false,
+                historyDescription: AppText.networkHistoryHint
             )
             .frame(height: 22)
         }
         .padding(.vertical, 9)
         .frame(maxWidth: .infinity, minHeight: DesignTokens.classicRowMinHeight, alignment: .leading)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(AppText.metricTitle(.network)), \(ratesDetail)")
+        .accessibilityLabel("\(AppText.metricTitle(.network)), \(AppText.combinedTraffic) \(totalRate.byteRateText), \(ratesDetail)")
+        .accessibilityHint(AppText.networkHistoryHint)
     }
 }
 

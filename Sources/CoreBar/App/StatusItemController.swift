@@ -17,16 +17,33 @@ final class StatusItemController: NSObject {
     private let popover = NSPopover()
     /// Classic settings — same NSPopover chrome as metrics (color + border).
     private let settingsPopover = NSPopover()
-    /// System Default uses one stable panel and switches SwiftUI content in place.
+    /// Cards reuse one panel, resizing it for the current page.
     private let systemNavigation = SystemPanelNavigationModel()
     private var systemPanel: NSPanel?
     private var systemPanelEventMonitor: Any?
+    private var systemPanelLocalEventMonitor: Any?
     private var snapshotCancellable: AnyCancellable?
     private var settingsCancellable: AnyCancellable?
+    private var navigationCancellable: AnyCancellable?
     private lazy var contextMenu: NSMenu = makeContextMenu()
     private var aboutPanel: NSPanel?
     private var aboutPanelLocalEventMonitor: Any?
     private var aboutPanelGlobalEventMonitor: Any?
+
+    deinit {
+        // AppKit event monitors belong to the controller, not the process.
+        let eventMonitors = [systemPanelEventMonitor, systemPanelLocalEventMonitor,
+                             aboutPanelLocalEventMonitor, aboutPanelGlobalEventMonitor].compactMap { $0 }
+        let item = statusItem
+        let panels = [systemPanel, aboutPanel].compactMap { $0 }
+        let popovers = [popover, settingsPopover]
+        Task { @MainActor in
+            eventMonitors.forEach(NSEvent.removeMonitor)
+            popovers.forEach { $0.performClose(nil) }
+            panels.forEach { $0.close() }
+            NSStatusBar.system.removeStatusItem(item)
+        }
+    }
 
     init(monitor: SystemMonitor, settings: AppSettings) {
         self.monitor = monitor
@@ -42,14 +59,18 @@ final class StatusItemController: NSObject {
         snapshotCancellable = monitor.$snapshot.sink { [weak self] snapshot in
             self?.update(with: snapshot)
         }
-        // Prefer publisher of concrete fields so we react after values commit (not objectWillChange).
+        // Deliver on the next run-loop turn so @Published storage has committed.
         settingsCancellable = settings.objectWillChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                // Defer to next runloop turn so @Published values are already updated.
-                DispatchQueue.main.async {
-                    self?.refreshOpenSurfaces()
-                }
+                self?.refreshOpenSurfaces()
+            }
+        navigationCancellable = systemNavigation.$page
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] page in
+                guard let self, self.systemNavigation.page == page else { return }
+                self.resizeSystemPanel(to: PanelMetricsLayout.systemDefaultPanelSize(settings: self.settings, page: page))
             }
     }
 
@@ -138,8 +159,8 @@ final class StatusItemController: NSObject {
             closeSystemPanel()
             if destination == .settings {
                 openSettingsPanel()
-            } else if let button = statusItem.button {
-                toggleMetricsPanel(relativeTo: button)
+            } else {
+                openOverviewPanel()
             }
             return
         }
@@ -149,7 +170,7 @@ final class StatusItemController: NSObject {
             settingsPopover.contentSize = settingsSize
         }
         if systemOpen {
-            resizeSystemPanel(to: PanelMetricsLayout.systemDefaultPanelSize(settings: settings))
+            resizeSystemPanel(to: PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: systemNavigation.page))
         }
 
         // --- Metrics ---
@@ -239,9 +260,8 @@ final class StatusItemController: NSObject {
 
     @objc
     private func openOverviewFromMenu(_ sender: NSMenuItem) {
-        guard let button = statusItem.button else { return }
         closeAboutPanel()
-        toggleMetricsPanel(relativeTo: button)
+        openOverviewPanel()
     }
 
     @objc
@@ -263,32 +283,37 @@ final class StatusItemController: NSObject {
     // MARK: - Metrics panel
 
     private func toggleMetricsPanel(relativeTo sender: NSStatusBarButton) {
-        if settings.panelStyle == .controlCenter {
-            settingsPopover.performClose(nil)
+        switch settings.panelStyle {
+        case .classic where popover.isShown:
             popover.performClose(sender)
-            toggleSystemPanel(relativeTo: sender)
-            return
-        }
-
-        closeSystemPanel()
-        settingsPopover.performClose(nil)
-        if popover.isShown {
-            popover.performClose(sender)
-        } else {
-            configurePopover()
-            monitor.refresh()
-            popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
+        case .controlCenter where systemPanel?.isVisible == true && systemNavigation.page == .overview:
+            closeSystemPanel()
+        default:
+            openOverviewPanel()
         }
     }
 
-    private func toggleSystemPanel(relativeTo sender: NSStatusBarButton) {
-        if systemPanel?.isVisible == true {
+    /// An explicit destination also serves the settings return button and menu.
+    func openOverviewPanel() {
+        guard let button = statusItem.button else { return }
+        settingsPopover.performClose(nil)
+        if settings.panelStyle == .classic {
             closeSystemPanel()
+            if !popover.isShown {
+                configurePopover()
+                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            }
+            popover.contentViewController?.view.window?.makeKey()
             return
         }
 
-        presentSystemPanel(page: .overview, relativeTo: sender)
+        popover.performClose(nil)
+        if systemPanel?.isVisible == true {
+            systemNavigation.showOverview()
+            systemPanel?.makeKeyAndOrderFront(nil)
+        } else {
+            presentSystemPanel(page: .overview, relativeTo: button)
+        }
     }
 
     private func presentSystemPanel(
@@ -300,13 +325,11 @@ final class StatusItemController: NSObject {
         } else {
             systemNavigation.showOverview()
         }
-        monitor.refresh()
-
         let hostingController = NSHostingController(rootView: systemPanelView)
         hostingController.view.wantsLayer = true
         hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
 
-        let panelSize = PanelMetricsLayout.systemDefaultPanelSize(settings: settings)
+        let panelSize = PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: page)
         presentFloatingPanel(
             hostingController: hostingController,
             size: panelSize,
@@ -324,6 +347,10 @@ final class StatusItemController: NSObject {
         if let systemPanelEventMonitor {
             NSEvent.removeMonitor(systemPanelEventMonitor)
             self.systemPanelEventMonitor = nil
+        }
+        if let systemPanelLocalEventMonitor {
+            NSEvent.removeMonitor(systemPanelLocalEventMonitor)
+            self.systemPanelLocalEventMonitor = nil
         }
     }
 
@@ -361,12 +388,7 @@ final class StatusItemController: NSObject {
     }
 
     static func settingsPanelSize(settings: AppSettings) -> NSSize {
-        switch settings.panelStyle {
-        case .classic:
-            PanelMetricsLayout.settingsPanelSize
-        case .controlCenter:
-            PanelMetricsLayout.systemDefaultPanelSize(settings: settings)
-        }
+        PanelMetricsLayout.settingsPanelSize
     }
 
     // MARK: - About
@@ -386,13 +408,14 @@ final class StatusItemController: NSObject {
         hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
 
         let size = AboutPanelView.contentSize
-        let panel = NSPanel(
+        let panel = StatusFloatingPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
         )
         panel.title = AppText.aboutCoreBar
+        panel.onCancel = { [weak self] in self?.closeAboutPanel() }
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = false
@@ -407,7 +430,7 @@ final class StatusItemController: NSObject {
         panel.makeKeyAndOrderFront(nil)
 
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.16
+            context.duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.16
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             panel.animator().alphaValue = 1
         }
@@ -460,12 +483,13 @@ final class StatusItemController: NSObject {
         onOutsideClick: @escaping () -> Void
     ) {
         // Drop any previous monitor for this surface before installing a new one.
-        let panel = NSPanel(
+        let panel = StatusFloatingPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
         )
+        panel.onCancel = onOutsideClick
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = false
@@ -479,34 +503,36 @@ final class StatusItemController: NSObject {
         panel.alphaValue = 0
         panel.makeKeyAndOrderFront(nil)
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.18
+            context.duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.18
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             panel.animator().alphaValue = 1
         }
 
         store(panel)
 
-        let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { event in
-            // Ignore clicks that land inside our floating panel.
-            Task { @MainActor in
-                if let panel = self.systemPanel,
-                   let window = panel as NSWindow?,
-                   let eventWindow = event.window,
-                   eventWindow == window {
-                    return
-                }
-                // Global monitors often have nil window; use screen location hit-test.
-                if let panel = self.systemPanel {
-                    let screenPoint = NSEvent.mouseLocation
-                    if panel.frame.contains(screenPoint) {
-                        return
-                    }
-                }
+        let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak panel] _ in
+            let point = NSEvent.mouseLocation
+            Task { @MainActor [weak panel] in
+                guard let panel, panel.isVisible, !panel.frame.contains(point) else { return }
                 onOutsideClick()
             }
         }
         if let monitor {
             eventMonitor(monitor)
+        }
+        systemPanelLocalEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak panel, weak sender] event in
+            let point = NSEvent.mouseLocation
+            // The status button routes its own click. Closing on mouse-down
+            // would otherwise cause mouse-up to reopen the same panel.
+            if let sender, let window = sender.window,
+               window.convertToScreen(sender.convert(sender.bounds, to: nil)).contains(point) {
+                return event
+            }
+            Task { @MainActor [weak panel] in
+                guard let panel, panel.isVisible, !panel.frame.contains(point) else { return }
+                onOutsideClick()
+            }
+            return event
         }
     }
 
@@ -541,7 +567,8 @@ final class StatusItemController: NSObject {
 
     private var settingsPanelView: some View {
         StandaloneSettingsPanelView(
-            settings: settings
+            settings: settings,
+            showOverview: { [weak self] in self?.openOverviewPanel() }
         )
     }
 
@@ -550,7 +577,19 @@ final class StatusItemController: NSObject {
             return
         }
 
-        panel.setContentSize(size)
-        panel.setFrameOrigin(panelOrigin(relativeTo: button, size: size))
+        let frame = NSRect(origin: panelOrigin(relativeTo: button, size: size), size: size)
+        guard panel.frame != frame else { return }
+        panel.setFrame(frame, display: true)
+    }
+}
+
+/// Borderless panels still need to become key for Escape and keyboard controls.
+private final class StatusFloatingPanel: NSPanel {
+    var onCancel: (() -> Void)?
+
+    override var canBecomeKey: Bool { true }
+
+    override func cancelOperation(_ sender: Any?) {
+        onCancel?()
     }
 }

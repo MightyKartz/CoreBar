@@ -6,15 +6,26 @@ enum AppText {
     }
 
     static func isChinese(localeIdentifier: String, preferredLanguages: [String]) -> Bool {
-        ([localeIdentifier] + preferredLanguages).contains {
-            $0.lowercased().hasPrefix("zh")
+        // Honor the first supported language, even when Chinese is also listed
+        // later. The regional locale is only a fallback for unsupported lists.
+        for identifier in preferredLanguages {
+            switch languageCode(in: identifier) {
+            case "zh": return true
+            case "en": return false
+            default: continue
+            }
         }
+        return languageCode(in: localeIdentifier) == "zh"
+    }
+
+    private static func languageCode(in identifier: String) -> String {
+        identifier.lowercased().split(whereSeparator: { $0 == "-" || $0 == "_" }).first.map(String.init) ?? ""
     }
 
     static func metricTitle(_ kind: MetricKind) -> String {
         switch kind {
         case .cpu: "CPU"
-        case .memory: choose(en: "Memory", zh: "内存")
+        case .memory: choose(en: "Memory pressure", zh: "内存压力")
         case .disk: choose(en: "Disk", zh: "磁盘")
         case .network: choose(en: "Network", zh: "网络")
         }
@@ -25,11 +36,11 @@ enum AppText {
     static var critical: String { choose(en: "Critical", zh: "严重") }
     static var normalShort: String { choose(en: "OK", zh: "正常") }
     static var warningShort: String { choose(en: "WARN", zh: "注意") }
-    static var criticalShort: String { choose(en: "HOT", zh: "严重") }
+    static var criticalShort: String { choose(en: "CRIT", zh: "严重") }
     /// Compact health pill copy used in panel headers (matches UI preview).
     static var healthPillNormal: String { choose(en: "OK", zh: "良好") }
     static var healthPillWarning: String { choose(en: "Watch", zh: "注意") }
-    static var healthPillCritical: String { choose(en: "Hot", zh: "严重") }
+    static var healthPillCritical: String { choose(en: "Critical", zh: "严重") }
     static var usage: String { choose(en: "Usage", zh: "用量") }
     static var updated: String { choose(en: "Updated", zh: "更新于") }
     static var live: String { choose(en: "Live", zh: "实时") }
@@ -40,27 +51,33 @@ enum AppText {
     static var quitCoreBar: String { choose(en: "Quit CoreBar", zh: "退出 CoreBar") }
     static var used: String { choose(en: "Used", zh: "已用") }
     static var free: String { choose(en: "Free", zh: "剩余") }
+    static var totalCapacity: String { choose(en: "Total", zh: "总容量") }
+    static var combinedTraffic: String { choose(en: "Combined", zh: "收发合计") }
     static var pressure: String { choose(en: "Pressure", zh: "压力") }
     static var cores: String { choose(en: "cores", zh: "核心") }
     static var currentLoad: String { choose(en: "Current load", zh: "当前负载") }
     static var waiting: String { choose(en: "Waiting for first sample", zh: "等待首次采样") }
     static var general: String { choose(en: "General", zh: "通用") }
-    static var launchAtLogin: String { choose(en: "Launch at login", zh: "开机启动") }
-    static var refreshInterval: String { choose(en: "Refresh interval", zh: "刷新频率") }
+    static var launchAtLogin: String { choose(en: "Launch at login", zh: "登录时启动") }
+    static var refreshInterval: String { choose(en: "Refresh interval", zh: "刷新间隔") }
     static var visibleMetrics: String { choose(en: "Visible metrics", zh: "显示指标") }
+    static var minimumMenuMetricHint: String {
+        choose(en: "Keep at least one menu bar metric visible.", zh: "至少保留一项菜单栏指标")
+    }
     static var networkPanelOnly: String { choose(en: "Network (panel only)", zh: "网络（仅面板）") }
     static var appearance: String { choose(en: "Appearance", zh: "外观") }
     static var colorScheme: String { choose(en: "Color scheme", zh: "外观模式") }
-    static var appearanceSystem: String { choose(en: "Auto", zh: "系统") }
+    static var appearanceSystem: String { choose(en: "System", zh: "跟随系统") }
     static var appearanceLight: String { choose(en: "Light", zh: "浅色") }
     static var appearanceDark: String { choose(en: "Dark", zh: "深色") }
     static var thresholdColors: String { choose(en: "Threshold colors", zh: "阈值颜色") }
     static var panelStyle: String { choose(en: "Panel style", zh: "面板风格") }
     static var classicPanel: String { choose(en: "Classic", zh: "经典") }
-    static var controlCenterPanel: String { choose(en: "System Default", zh: "系统默认") }
+    static var controlCenterPanel: String { choose(en: "Cards", zh: "卡片") }
     static var download: String { choose(en: "Down", zh: "下载") }
     static var upload: String { choose(en: "Up", zh: "上传") }
     static var settings: String { choose(en: "Settings", zh: "设置") }
+    static var backToUsage: String { choose(en: "Back to Usage", zh: "返回用量") }
     static var about: String { choose(en: "About", zh: "关于") }
     static var aboutCoreBar: String { choose(en: "About CoreBar", zh: "关于 CoreBar") }
     static var privacyPolicy: String { choose(en: "Privacy Policy", zh: "隐私政策") }
@@ -75,8 +92,25 @@ enum AppText {
     }
     static var noMetrics: String { choose(en: "No visible metrics", zh: "没有显示指标") }
     static var recentHistory: String { choose(en: "Recent history", zh: "近期历史") }
+    static var recentSamplesHint: String { choose(en: "Last 30 samples", zh: "最近30次采样") }
+    static var networkHistoryHint: String {
+        choose(
+            en: "Combined traffic · Last 30 samples · Auto-scaled",
+            zh: "收发合计 · 最近30次采样 · 自动缩放"
+        )
+    }
+    static var globalHealthHint: String {
+        choose(
+            en: "Overall status includes CPU, memory pressure, and disk, including hidden metrics.",
+            zh: "整体状态汇总 CPU、内存压力和磁盘，包含隐藏指标。"
+        )
+    }
+    static var hiddenMetric: String { choose(en: "Hidden", zh: "未显示") }
     static var thresholdColorsHint: String {
-        choose(en: "Warn at 75% / critical at 90%", zh: "超过 75% / 90% 显示警示色")
+        choose(
+            en: "CPU usage / memory pressure: warning at 75%, critical at 90%. Disk usage: warning at 85%, critical at 95%.",
+            zh: "CPU 使用率／内存压力：达到 75% 提醒，90% 严重。磁盘使用率：达到 85% 提醒，95% 严重。"
+        )
     }
 
     static func seconds(_ value: Double) -> String {

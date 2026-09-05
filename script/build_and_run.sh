@@ -1,69 +1,130 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MODE="${1:-run}"
-APP_NAME="CoreBar"
-BUNDLE_ID="${BUNDLE_ID:-com.mightykartz.usagebar}"
-VERSION="${VERSION:-0.1.0}"
-BUILD_NUMBER="${BUILD_NUMBER:-1}"
-CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-}"
-CONFIGURATION="${CONFIGURATION:-debug}"
-MIN_SYSTEM_VERSION="14.0"
+usage() {
+  echo "usage: $0 [run|--build-only|--debug|--logs|--telemetry|--verify]" >&2
+}
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DIST_DIR="$ROOT_DIR/dist"
-APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
-APP_CONTENTS="$APP_BUNDLE/Contents"
-APP_MACOS="$APP_CONTENTS/MacOS"
-APP_BINARY="$APP_MACOS/$APP_NAME"
-INFO_PLIST="$APP_CONTENTS/Info.plist"
-
-pkill -x "$APP_NAME" >/dev/null 2>&1 || true
-
-swift build -c "$CONFIGURATION"
-BUILD_BINARY="$(swift build -c "$CONFIGURATION" --show-bin-path)/$APP_NAME"
-
-rm -rf "$APP_BUNDLE"
-mkdir -p "$APP_MACOS"
-cp "$BUILD_BINARY" "$APP_BINARY"
-chmod +x "$APP_BINARY"
-
-cat >"$INFO_PLIST" <<PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>CFBundleExecutable</key>
-  <string>$APP_NAME</string>
-  <key>CFBundleIdentifier</key>
-  <string>$BUNDLE_ID</string>
-  <key>CFBundleName</key>
-  <string>$APP_NAME</string>
-  <key>CFBundleShortVersionString</key>
-  <string>$VERSION</string>
-  <key>CFBundleVersion</key>
-  <string>$BUILD_NUMBER</string>
-  <key>CFBundlePackageType</key>
-  <string>APPL</string>
-  <key>LSMinimumSystemVersion</key>
-  <string>$MIN_SYSTEM_VERSION</string>
-  <key>LSUIElement</key>
-  <true/>
-  <key>NSPrincipalClass</key>
-  <string>NSApplication</string>
-</dict>
-</plist>
-PLIST
-
-if [[ -n "$CODESIGN_IDENTITY" ]]; then
-  codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" "$APP_BUNDLE"
+if [[ $# -gt 1 ]]; then
+  usage
+  exit 2
 fi
+
+MODE="${1:-run}"
+case "$MODE" in
+  run|--debug|debug|--logs|logs|--telemetry|telemetry|--verify|verify) ;;
+  --build-only|build-only) MODE="build-only" ;;
+  --help|-h) usage; exit 0 ;;
+  *) usage; exit 2 ;;
+esac
+
+case "${CONFIGURATION:-Debug}" in
+  debug|Debug) CONFIGURATION="Debug" ;;
+  release|Release) CONFIGURATION="Release" ;;
+  *) echo "CONFIGURATION must be Debug or Release." >&2; exit 2 ;;
+esac
+
+for setting in VERSION BUILD_NUMBER; do
+  value="${!setting:-}"
+  if [[ -n "$value" && ! "$value" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+    echo "$setting must contain one to three dot-separated numbers." >&2
+    exit 2
+  fi
+done
+
+if [[ -n "${BUNDLE_ID:-}" && ! "$BUNDLE_ID" =~ ^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$ ]]; then
+  echo "BUNDLE_ID must be a reverse-DNS identifier." >&2
+  exit 2
+fi
+
+APP_NAME="CoreBar"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+DIST_DIR="${DIST_DIR:-$ROOT_DIR/dist}"
+DERIVED_DATA_DIR="${DERIVED_DATA_DIR:-$ROOT_DIR/.build/xcode}"
+CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
+APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
+APP_BINARY="$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+
+# The Xcode project owns the app's plist, resources, version and entitlements.
+# Override individual settings only when requested by the caller.
+BUILD_SETTINGS=(
+  "CODE_SIGN_STYLE=Manual"
+  "CODE_SIGN_IDENTITY=$CODESIGN_IDENTITY"
+  "DEVELOPMENT_TEAM=${DEVELOPMENT_TEAM:-}"
+  "CODE_SIGNING_ALLOWED=YES"
+  "CODE_SIGNING_REQUIRED=YES"
+)
+[[ -z "${VERSION:-}" ]] || BUILD_SETTINGS+=("MARKETING_VERSION=$VERSION")
+[[ -z "${BUILD_NUMBER:-}" ]] || BUILD_SETTINGS+=("CURRENT_PROJECT_VERSION=$BUILD_NUMBER")
+[[ -z "${BUNDLE_ID:-}" ]] || BUILD_SETTINGS+=("PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE_ID")
+if [[ "$CODESIGN_IDENTITY" != "-" ]]; then
+  BUILD_SETTINGS+=("OTHER_CODE_SIGN_FLAGS=--options runtime --timestamp")
+fi
+
+xcodebuild -quiet \
+  -project "$ROOT_DIR/CoreBar.xcodeproj" \
+  -scheme "$APP_NAME" \
+  -configuration "$CONFIGURATION" \
+  -destination "generic/platform=macOS" \
+  -derivedDataPath "$DERIVED_DATA_DIR" \
+  "${BUILD_SETTINGS[@]}" \
+  build
+
+BUILT_APP="$DERIVED_DATA_DIR/Build/Products/$CONFIGURATION/$APP_NAME.app"
+if [[ ! -x "$BUILT_APP/Contents/MacOS/$APP_NAME" ]]; then
+  echo "The build did not produce $BUILT_APP." >&2
+  exit 1
+fi
+
+mkdir -p "$DIST_DIR"
+STAGING_DIR="$(mktemp -d "$DIST_DIR/.corebar-build.XXXXXX")"
+cleanup() {
+  local result=$?
+  # Restore the prior bundle if publishing was interrupted between the moves.
+  if [[ ( -e "$STAGING_DIR/previous.app" || -L "$STAGING_DIR/previous.app" ) && ! -e "$APP_BUNDLE" && ! -L "$APP_BUNDLE" ]]; then
+    mv "$STAGING_DIR/previous.app" "$APP_BUNDLE"
+  fi
+  rm -rf "$STAGING_DIR"
+  return "$result"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+STAGED_APP="$STAGING_DIR/$APP_NAME.app"
+ditto "$BUILT_APP" "$STAGED_APP"
+codesign --verify --deep --strict "$STAGED_APP"
+RESOLVED_BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$STAGED_APP/Contents/Info.plist")"
+
+# Keep the current app running throughout compilation and signature validation.
+if [[ "$MODE" != "build-only" ]]; then
+  pkill -x "$APP_NAME" >/dev/null 2>&1 || true
+  for ((attempt = 0; attempt < 30; attempt++)); do
+    if ! pgrep -x "$APP_NAME" >/dev/null; then
+      break
+    fi
+    sleep 0.1
+  done
+  if pgrep -x "$APP_NAME" >/dev/null; then
+    echo "$APP_NAME is still running; the existing app bundle was kept." >&2
+    exit 1
+  fi
+fi
+
+if [[ -e "$APP_BUNDLE" || -L "$APP_BUNDLE" ]]; then
+  mv "$APP_BUNDLE" "$STAGING_DIR/previous.app"
+fi
+mv "$STAGED_APP" "$APP_BUNDLE"
+echo "Built $APP_BUNDLE ($CONFIGURATION)"
 
 open_app() {
   /usr/bin/open -n "$APP_BUNDLE"
 }
 
 case "$MODE" in
+  build-only)
+    ;;
   run)
     open_app
     ;;
@@ -76,15 +137,11 @@ case "$MODE" in
     ;;
   --telemetry|telemetry)
     open_app
-    /usr/bin/log stream --info --style compact --predicate "subsystem == \"$BUNDLE_ID\""
+    /usr/bin/log stream --info --style compact --predicate "subsystem == \"$RESOLVED_BUNDLE_ID\""
     ;;
   --verify|verify)
     open_app
     sleep 1
     pgrep -x "$APP_NAME" >/dev/null
-    ;;
-  *)
-    echo "usage: $0 [run|--debug|--logs|--telemetry|--verify]" >&2
-    exit 2
     ;;
 esac

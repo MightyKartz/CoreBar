@@ -4,7 +4,7 @@ import SwiftUI
 /// Shared visual tokens aligned with `docs/ui-ux-preview.html`.
 enum DesignTokens {
     static let panelWidth: CGFloat = 372
-    /// Classic and System Default share one outer size.
+    /// Both panel styles share the same width.
     static let classicPanelWidth: CGFloat = panelWidth
     static let panelCornerRadius: CGFloat = 28
     static let classicCornerRadius: CGFloat = panelCornerRadius
@@ -21,19 +21,18 @@ enum DesignTokens {
     static let iconContainer: CGFloat = 28
     static let classicIconContainer: CGFloat = 26
     static let classicProgressHeight: CGFloat = 3
-    static let tileMinHeight: CGFloat = 132
+    static let tileMinHeight: CGFloat = 160
     /// Compact flat classic list row (one supporting visualization, no card chrome).
-    static let classicRowMinHeight: CGFloat = 78
+    static let classicRowMinHeight: CGFloat = 96
     static let gridSpacing: CGFloat = 10
     static let listSpacing: CGFloat = 10
 
-    /// Lightweight tone layered over the panel's single system material.
-    /// These surfaces add hierarchy without stacking another blur effect.
+    /// Light surfaces use opaque system fills; dark surfaces retain a subtle veil.
     static func surfaceFill(colorScheme: ColorScheme) -> Color {
         if colorScheme == .dark {
             return Color.white.opacity(0.07)
         }
-        return Color.white.opacity(0.38)
+        return Color(nsColor: .controlBackgroundColor)
     }
 
     static func surfaceStroke(colorScheme: ColorScheme) -> Color {
@@ -47,7 +46,7 @@ enum DesignTokens {
         if colorScheme == .dark {
             return Color.white.opacity(0.10)
         }
-        return Color.white.opacity(0.52)
+        return Color(nsColor: .controlBackgroundColor)
     }
 
     static let green = Color(red: 52 / 255, green: 199 / 255, blue: 89 / 255)

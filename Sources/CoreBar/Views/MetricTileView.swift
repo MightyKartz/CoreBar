@@ -26,7 +26,8 @@ struct MetricTileView: View {
                     .strokeBorder(tileStroke, lineWidth: 0.5)
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(AppText.metricTitle(metric.kind)), \(metric.value.percentText), \(detailText)")
+            .accessibilityLabel("\(AppText.metricTitle(metric.kind)), \(metric.value.percentText), \(detailText)\(totalCapacityText.map { ", \($0)" } ?? "")")
+            .accessibilityHint(metric.kind == .cpu ? AppText.recentSamplesHint : "")
     }
 
     private var tileBody: some View {
@@ -46,12 +47,21 @@ struct MetricTileView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, 10)
 
-            Text(detailText)
-                .font(.system(size: 11.5, weight: .medium))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .padding(.top, 3)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(detailText)
+                    .font(.system(size: 12, weight: .medium))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let totalCapacityText {
+                    Text(totalCapacityText)
+                        .font(.system(size: 12))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.9)
+                }
+            }
+            .foregroundStyle(.secondary)
+            .padding(.top, 3)
 
             Spacer(minLength: 10)
 
@@ -101,17 +111,26 @@ struct MetricTileView: View {
             let cores = metric.coreCount ?? 0
             return "\(AppText.currentLoad) · \(cores) \(AppText.cores)"
         case .memory:
-            guard let used = metric.usedBytes, let total = metric.totalBytes else {
+            guard let used = metric.usedBytes else {
                 return AppText.waiting
             }
-            return "\(used.memoryByteText) / \(total.memoryByteText)"
+            return "\(AppText.used) \(used.memoryByteText)"
         case .disk:
-            guard let free = metric.freeBytes, let total = metric.totalBytes else {
+            guard let free = metric.freeBytes else {
                 return AppText.waiting
             }
-            return "\(AppText.free) \(free.byteText) · \(total.byteText)"
+            return "\(AppText.free) \(free.byteText)"
         case .network:
             return ""
+        }
+    }
+
+    private var totalCapacityText: String? {
+        guard let total = metric.totalBytes else { return nil }
+        switch metric.kind {
+        case .memory: return "\(AppText.totalCapacity) \(total.memoryByteText)"
+        case .disk: return "\(AppText.totalCapacity) \(total.byteText)"
+        case .cpu, .network: return nil
         }
     }
 
@@ -181,14 +200,19 @@ struct NetworkTileView: View {
                     .minimumScaleFactor(0.8)
             }
 
-            Text(AppText.metricTitle(.network))
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .padding(.top, 10)
+            HStack {
+                Text(AppText.metricTitle(.network))
+                    .font(.system(size: 12, weight: .semibold))
+                Spacer(minLength: 4)
+                Text(AppText.combinedTraffic)
+                    .font(.system(size: 12))
+            }
+            .foregroundStyle(.secondary)
+            .padding(.top, 10)
 
-            HStack(spacing: 14) {
-                rateColumn(title: AppText.download, value: network.downloadBytesPerSecond)
-                rateColumn(title: AppText.upload, value: network.uploadBytesPerSecond)
+            VStack(spacing: 3) {
+                rateRow(title: AppText.download, value: network.downloadBytesPerSecond)
+                rateRow(title: AppText.upload, value: network.uploadBytesPerSecond)
             }
             .padding(.top, 6)
 
@@ -198,7 +222,8 @@ struct NetworkTileView: View {
                 values: history,
                 color: accent,
                 fixedRange: 0...MetricSparklineView.rollingUpperBound(for: history),
-                showsArea: true
+                showsArea: true,
+                historyDescription: AppText.networkHistoryHint
             )
             .frame(height: 28)
         }
@@ -211,19 +236,23 @@ struct NetworkTileView: View {
                 .strokeBorder(tileStroke, lineWidth: 0.5)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(AppText.metricTitle(.network)), \(AppText.download) \(network.downloadBytesPerSecond.byteRateText), \(AppText.upload) \(network.uploadBytesPerSecond.byteRateText)")
+        .accessibilityLabel("\(AppText.metricTitle(.network)), \(AppText.combinedTraffic) \(totalRate.byteRateText), \(AppText.download) \(network.downloadBytesPerSecond.byteRateText), \(AppText.upload) \(network.uploadBytesPerSecond.byteRateText)")
+        .accessibilityHint(AppText.networkHistoryHint)
     }
 
-    private func rateColumn(title: String, value: Double) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+    private func rateRow(title: String, value: Double) -> some View {
+        HStack(spacing: 4) {
             Text(title)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
             Text(value.byteRateText)
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.primary)
                 .contentTransition(motionReduced ? .identity : .numericText(value: value))
                 .animation(DesignTokens.valueAnimation(reduceMotion: motionReduced), value: value)
+                .lineLimit(1)
+                .minimumScaleFactor(0.9)
         }
     }
 

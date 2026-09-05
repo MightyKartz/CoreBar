@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// A content-bearing Liquid Glass surface (macOS 26+ glass, else NSVisualEffectView).
+/// An opaque light surface, with system glass reserved for dark appearance.
 /// Applying glass to the content tree lets the system keep foreground content vibrant;
 /// placing the effect in a sibling background would only render the material itself.
 struct LiquidGlassSurface<Content: View>: View {
@@ -29,7 +29,7 @@ struct LiquidGlassSurface<Content: View>: View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
         Group {
-            if reduceTransparency || colorSchemeContrast == .increased {
+            if colorScheme == .light || reduceTransparency || colorSchemeContrast == .increased {
                 content
                     .background(shape.fill(Color(nsColor: .windowBackgroundColor)))
             } else if #available(macOS 26.0, *) {
@@ -62,6 +62,7 @@ struct HealthPillView: View {
     let metricTitle: String
     let percent: Double
     let usesThresholdColors: Bool
+    var isMetricHidden: Bool = false
 
     private var accent: Color {
         usesThresholdColors ? DesignTokens.color(for: level) : Color.primary
@@ -94,9 +95,15 @@ struct HealthPillView: View {
             .frame(width: 14, height: 14)
             .accessibilityHidden(true)
 
-            displayTitle
-                .font(.system(size: 11, weight: .semibold))
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                displayTitle
+                    .font(.system(size: 11, weight: .semibold))
+                    .lineLimit(1)
+                if isAlert && isMetricHidden {
+                    Text(AppText.hiddenMetric)
+                        .font(.system(size: 10, weight: .medium))
+                }
+            }
         }
         .padding(.horizontal, isAlert ? 10 : 4)
         .padding(.vertical, 6)
@@ -107,7 +114,10 @@ struct HealthPillView: View {
                     .fill(accent.opacity(0.14))
             }
         }
-        .accessibilityLabel("\(AppText.healthPillTitle(level)), \(metricTitle), \(percent.percentText)")
+        .help(AppText.globalHealthHint)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(AppText.healthPillTitle(level)), \(metricTitle), \(percent.percentText)\(isAlert && isMetricHidden ? ", \(AppText.hiddenMetric)" : "")")
+        .accessibilityHint(AppText.globalHealthHint)
     }
 
     @ViewBuilder

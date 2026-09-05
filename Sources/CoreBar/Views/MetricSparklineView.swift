@@ -5,6 +5,7 @@ struct MetricSparklineView: View {
     let color: Color
     var fixedRange: ClosedRange<Double>? = 0...1
     var showsArea: Bool = true
+    var historyDescription: String = AppText.recentSamplesHint
 
     var body: some View {
         GeometryReader { proxy in
@@ -24,7 +25,9 @@ struct MetricSparklineView: View {
                 }
             }
         }
-        .accessibilityLabel(AppText.recentHistory)
+        .help(historyDescription)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(historyDescription)
     }
 
     static func normalizedValues(_ values: [Double], fixedRange: ClosedRange<Double>?) -> [Double] {

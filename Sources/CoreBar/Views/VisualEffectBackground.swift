@@ -24,7 +24,7 @@ struct VisualEffectBackground: NSViewRepresentable {
     }
 }
 
-/// Classic surface that lets NSPopover own the material instead of stacking another blur.
+/// Classic surfaces are solid in light mode; dark mode uses the host's material.
 struct ClassicPanelBackground: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
@@ -37,7 +37,7 @@ struct ClassicPanelBackground: View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
         ZStack {
-            if reduceTransparency || colorSchemeContrast == .increased {
+            if colorScheme == .light || reduceTransparency || colorSchemeContrast == .increased {
                 shape.fill(Color(nsColor: .windowBackgroundColor))
             } else if showsBorder {
                 // Borderless hosts need exactly one material layer of their own.
@@ -45,11 +45,7 @@ struct ClassicPanelBackground: View {
 
                 // A borderless host has no system Popover beneath it, so retain a
                 // subtle veil to stabilize foreground contrast.
-                shape.fill(
-                    colorScheme == .dark
-                        ? Color.white.opacity(0.018)
-                        : Color.white.opacity(0.12)
-                )
+                shape.fill(Color.white.opacity(0.018))
                 .allowsHitTesting(false)
             } else {
                 // NSPopover supplies the material, border, arrow, and shadow.

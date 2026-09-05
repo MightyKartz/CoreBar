@@ -2,11 +2,11 @@ import AppKit
 import Combine
 import SwiftUI
 
-// MARK: - Panel heights (System Default shares one stable footprint)
+// MARK: - Panel heights
 
 @MainActor
 enum PanelMetricsLayout {
-    static let overviewHeaderHeight: CGFloat = 62
+    static let overviewHeaderHeight: CGFloat = 76
 
     /// Compact settings form ideal height (title + 3 groups, no scroll).
     static var settingsIdealHeight: CGFloat {
@@ -17,7 +17,7 @@ enum PanelMetricsLayout {
         let row: CGFloat = 30
         let groupGap: CGFloat = 8
         let general = groupTitle + row * 2
-        let metrics = groupTitle + row * 4
+        let metrics = groupTitle + row * 4 + 28
         let appearance = groupTitle + row * 3
         let bottomSafety: CGFloat = 8
         return chrome + general + metrics + appearance + groupGap * 2 + bottomSafety
@@ -52,16 +52,14 @@ enum PanelMetricsLayout {
         systemDefaultPanelSize(settings: settings)
     }
 
-    /// System Default switches between overview and settings in place, so both
-    /// surfaces use the larger of their ideal heights. This prevents the metric
-    /// grid from being clipped and avoids a visible resize during navigation.
-    static func systemDefaultPanelSize(settings: AppSettings) -> NSSize {
+    /// Each page uses its own height; the controller keeps the top edge anchored.
+    static func systemDefaultPanelSize(
+        settings: AppSettings,
+        page: SystemPanelNavigationModel.Page = .overview
+    ) -> NSSize {
         NSSize(
             width: DesignTokens.panelWidth,
-            height: max(
-                settingsIdealHeight,
-                controlCenterIntrinsicHeight(settings: settings)
-            )
+            height: page == .settings ? settingsIdealHeight : controlCenterIntrinsicHeight(settings: settings)
         )
     }
 
@@ -85,6 +83,7 @@ struct OverviewPanelHeader: View {
     let metricTitle: String
     let percent: Double
     let usesThresholdColors: Bool
+    let isHeadlineHidden: Bool
     let openSettings: () -> Void
 
     var body: some View {
@@ -117,10 +116,12 @@ struct OverviewPanelHeader: View {
                     level: level,
                     metricTitle: metricTitle,
                     percent: percent,
-                    usesThresholdColors: usesThresholdColors
+                    usesThresholdColors: usesThresholdColors,
+                    isMetricHidden: isHeadlineHidden
                 )
                 .frame(maxWidth: 170, alignment: .trailing)
             }
+            .frame(height: 40)
         }
     }
 }
@@ -186,7 +187,7 @@ struct StatusPanelView: View {
         .padding(.horizontal, DesignTokens.panelContentHorizontal)
         .padding(.bottom, DesignTokens.panelContentBottom)
         .frame(width: size.width, height: size.height, alignment: .topLeading)
-        // Keep content transparent so NSPopover owns the material, border, arrow, and shadow.
+        // Dark mode uses the popover material; light mode covers it with a solid fill.
         .background(ClassicPanelBackground(showsBorder: false, cornerRadius: 0))
     }
 
@@ -207,6 +208,7 @@ struct StatusPanelView: View {
             metricTitle: AppText.metricTitle(monitor.snapshot.headlineMetric.kind),
             percent: monitor.snapshot.headlineMetric.value,
             usesThresholdColors: settings.useThresholdColors,
+            isHeadlineHidden: !settings.visibleMenuKinds.contains(monitor.snapshot.headlineMetric.kind),
             openSettings: openSettings
         )
     }
@@ -232,7 +234,7 @@ final class SystemPanelNavigationModel: ObservableObject {
     }
 }
 
-/// One stable floating panel whose SwiftUI content switches in place.
+/// One floating panel whose SwiftUI content switches in place.
 /// AppKit owns the window; SwiftUI owns the navigation state and transition.
 struct SystemDefaultPanelView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -242,7 +244,7 @@ struct SystemDefaultPanelView: View {
     let close: () -> Void
 
     var body: some View {
-        let size = PanelMetricsLayout.systemDefaultPanelSize(settings: settings)
+        let size = PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page)
 
         SystemDefaultPanelSurface {
             ZStack {
@@ -257,6 +259,7 @@ struct SystemDefaultPanelView: View {
                 } else {
                     StandaloneSettingsPanelView(
                         settings: settings,
+                        showOverview: navigation.showOverview,
                         usesExternalSystemChrome: true
                     )
                     .transition(.opacity)
@@ -276,7 +279,6 @@ struct ControlCenterPanelView: View {
     var showsChrome: Bool = true
 
     static func contentSize(settings: AppSettings) -> NSSize {
-        // Overview and settings share one stable System Default footprint.
         PanelMetricsLayout.controlCenterPanelSize(settings: settings)
     }
 
@@ -332,6 +334,7 @@ struct ControlCenterPanelView: View {
                 GridRow {
                     ForEach(row, id: \.self) { index in
                         metricItem(at: index, metrics: metrics)
+                            .frame(height: DesignTokens.tileMinHeight, alignment: .top)
                             .gridCellColumns(row.count == 1 ? 2 : 1)
                     }
                 }
@@ -365,6 +368,7 @@ struct ControlCenterPanelView: View {
             metricTitle: AppText.metricTitle(monitor.snapshot.headlineMetric.kind),
             percent: monitor.snapshot.headlineMetric.value,
             usesThresholdColors: settings.useThresholdColors,
+            isHeadlineHidden: !settings.visibleMenuKinds.contains(monitor.snapshot.headlineMetric.kind),
             openSettings: openSettings
         )
     }
@@ -372,7 +376,7 @@ struct ControlCenterPanelView: View {
 
 // MARK: - Shared system-default shell (metrics + settings)
 
-/// One adaptive, content-bearing system material shared by overview, settings, and About.
+/// Shared chrome: solid light surfaces and adaptive dark system material.
 struct SystemDefaultPanelSurface<Content: View>: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
@@ -413,9 +417,10 @@ struct SystemDefaultPanelSurface<Content: View>: View {
 // MARK: - Standalone settings (dismiss by clicking outside)
 
 /// Floating settings surface; host closes on outside click.
-/// System Default: same size + chrome as ControlCenterPanelView. Classic: same as StatusPanelView popover.
+/// Both styles share the same form and return action, with their own panel chrome.
 struct StandaloneSettingsPanelView: View {
     @ObservedObject var settings: AppSettings
+    let showOverview: () -> Void
     var usesExternalSystemChrome: Bool = false
 
     private var size: NSSize {
@@ -444,10 +449,22 @@ struct StandaloneSettingsPanelView: View {
     private var panelContent: some View {
         // Top-aligned like the metrics panel (same insets / footprint).
         VStack(alignment: .leading, spacing: 0) {
-            Text(AppText.settings)
-                .font(.system(size: 17, weight: .semibold))
-                .tracking(-0.3)
-                .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
+            HStack(spacing: 12) {
+                Text(AppText.settings)
+                    .font(.system(size: 17, weight: .semibold))
+                    .tracking(-0.3)
+                Spacer(minLength: 8)
+                Button(action: showOverview) {
+                    Label(AppText.backToUsage, systemImage: "chevron.backward")
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .tint(Color(nsColor: .systemGray))
+                .foregroundStyle(.primary)
+                .keyboardShortcut("[", modifiers: .command)
+                .help(AppText.backToUsage)
+            }
+            .frame(minHeight: 30)
             .padding(.horizontal, 4)
             .padding(.bottom, 12)
             .focusSection()
