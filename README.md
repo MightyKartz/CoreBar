@@ -23,7 +23,7 @@ CoreBar is a quiet macOS menu bar monitor for CPU, memory, disk, and network act
 
 ![CoreBar popover preview](docs/images/panel-preview.svg)
 
-The memory percentage is a pressure estimate calculated from system page statistics, not Activity Monitor's pressure signal. Used memory is shown separately and does not correspond to that percentage. Network rates include active non-loopback interfaces, including virtual interfaces. The time span of each trend changes with the refresh interval.
+The panel labels the memory metric **Memory**. Its percentage is a pressure estimate calculated from system page statistics, not Activity Monitor's pressure signal. Used memory is shown separately and does not correspond to that percentage. Network rates include active non-loopback interfaces, including virtual interfaces. The time span of each trend changes with the refresh interval.
 
 ## Why CoreBar
 

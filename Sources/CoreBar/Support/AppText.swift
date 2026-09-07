@@ -25,7 +25,7 @@ enum AppText {
     static func metricTitle(_ kind: MetricKind) -> String {
         switch kind {
         case .cpu: "CPU"
-        case .memory: choose(en: "Memory pressure", zh: "内存压力")
+        case .memory: choose(en: "Memory", zh: "内存")
         case .disk: choose(en: "Disk", zh: "磁盘")
         case .network: choose(en: "Network", zh: "网络")
         }
