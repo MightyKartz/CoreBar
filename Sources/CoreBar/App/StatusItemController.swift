@@ -13,11 +13,11 @@ final class StatusItemController: NSObject {
     private let monitor: SystemMonitor
     private let settings: AppSettings
     private let statusItem: NSStatusItem
-    /// Classic metrics panel.
+    /// Classic popovers remain the fallback on macOS 14–15.
     private let popover = NSPopover()
     /// Classic settings — same NSPopover chrome as metrics (color + border).
     private let settingsPopover = NSPopover()
-    /// Cards reuse one panel, resizing it for the current page.
+    /// On macOS 26 both layouts share one glass host; older systems use it for Cards.
     private let systemNavigation = SystemPanelNavigationModel()
     private var systemPanel: NSPanel?
     private var systemPanelEventMonitor: Any?
@@ -29,6 +29,11 @@ final class StatusItemController: NSObject {
     private var aboutPanel: NSPanel?
     private var aboutPanelLocalEventMonitor: Any?
     private var aboutPanelGlobalEventMonitor: Any?
+
+    private var usesSystemPanel: Bool {
+        if #available(macOS 26.0, *) { return true }
+        return settings.panelStyle == .controlCenter
+    }
 
     deinit {
         // AppKit event monitors belong to the controller, not the process.
@@ -149,12 +154,12 @@ final class StatusItemController: NSObject {
         let classicSettingsOpen = settingsPopover.isShown
         let systemOpen = systemPanel?.isVisible == true
 
-        if classicSettingsOpen, style != .classic {
+        if classicSettingsOpen, usesSystemPanel {
             settingsPopover.performClose(nil)
             openSettingsPanel()
             return
         }
-        if systemOpen, style != .controlCenter {
+        if systemOpen, !usesSystemPanel {
             let destination = systemNavigation.page
             closeSystemPanel()
             if destination == .settings {
@@ -283,12 +288,11 @@ final class StatusItemController: NSObject {
     // MARK: - Metrics panel
 
     private func toggleMetricsPanel(relativeTo sender: NSStatusBarButton) {
-        switch settings.panelStyle {
-        case .classic where popover.isShown:
-            popover.performClose(sender)
-        case .controlCenter where systemPanel?.isVisible == true && systemNavigation.page == .overview:
+        if usesSystemPanel, systemPanel?.isVisible == true && systemNavigation.page == .overview {
             closeSystemPanel()
-        default:
+        } else if !usesSystemPanel, popover.isShown {
+            popover.performClose(sender)
+        } else {
             openOverviewPanel()
         }
     }
@@ -297,7 +301,7 @@ final class StatusItemController: NSObject {
     func openOverviewPanel() {
         guard let button = statusItem.button else { return }
         settingsPopover.performClose(nil)
-        if settings.panelStyle == .classic {
+        if !usesSystemPanel {
             closeSystemPanel()
             if !popover.isShown {
                 configurePopover()
@@ -361,7 +365,7 @@ final class StatusItemController: NSObject {
             return
         }
 
-        if settings.panelStyle == .classic {
+        if !usesSystemPanel {
             popover.performClose(nil)
             closeSystemPanel()
             if settingsPopover.isShown {
@@ -374,7 +378,7 @@ final class StatusItemController: NSObject {
             return
         }
 
-        // System Default settings switch inside the existing floating panel.
+        // Both modern layouts switch pages inside the existing glass host.
         popover.performClose(nil)
         settingsPopover.performClose(nil)
 
@@ -492,7 +496,8 @@ final class StatusItemController: NSObject {
         panel.onCancel = onOutsideClick
         panel.backgroundColor = .clear
         panel.isOpaque = false
-        panel.hasShadow = false
+        // AppKit owns the exterior shadow; the surface owns its material and edge.
+        panel.hasShadow = true
         panel.hidesOnDeactivate = false
         panel.level = .popUpMenu
         panel.collectionBehavior = [.transient, .canJoinAllSpaces, .fullScreenAuxiliary]
@@ -580,6 +585,7 @@ final class StatusItemController: NSObject {
         let frame = NSRect(origin: panelOrigin(relativeTo: button, size: size), size: size)
         guard panel.frame != frame else { return }
         panel.setFrame(frame, display: true)
+        panel.invalidateShadow()
     }
 }
 

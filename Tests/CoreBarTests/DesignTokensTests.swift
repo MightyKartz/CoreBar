@@ -112,6 +112,43 @@ final class DesignTokensTests: XCTestCase {
     }
 
     @MainActor
+    func testSharedPanelKeepsSettingsSizeWhenSwitchingLayoutsAndRestoresOverviewSize() {
+        let suite = "CoreBarTests.SharedPanelSize.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = AppSettings(defaults: defaults, appliesSystemAppearance: false)
+        let navigation = SystemPanelNavigationModel()
+        let settingsSize = PanelMetricsLayout.settingsPanelSize
+
+        navigation.showSettings()
+        for style in PanelStyle.allCases {
+            settings.panelStyle = style
+            XCTAssertEqual(
+                PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page),
+                settingsSize
+            )
+            navigation.showOverview()
+            let overviewSize = PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page)
+            XCTAssertEqual(overviewSize, style == .classic
+                ? StatusPanelView.contentSize(settings: settings)
+                : ControlCenterPanelView.contentSize(settings: settings))
+            navigation.showSettings()
+        }
+
+        settings.panelStyle = .classic
+        settings.showMemory = false
+        settings.showDisk = false
+        settings.showNetwork = false
+        XCTAssertEqual(PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page), settingsSize)
+        navigation.showOverview()
+        XCTAssertEqual(
+            PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page),
+            StatusPanelView.contentSize(settings: settings)
+        )
+        XCTAssertLessThan(StatusPanelView.contentSize(settings: settings).height, settingsSize.height)
+    }
+
+    @MainActor
     func testClassicPanelHeightTracksVisibleRows() {
         let suite = "CoreBarTests.ClassicSize.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!

@@ -10,18 +10,15 @@ struct LiquidGlassSurface<Content: View>: View {
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     var cornerRadius: CGFloat
     var material: NSVisualEffectView.Material
-    var showsBorder: Bool = true
     private let content: Content
 
     init(
         cornerRadius: CGFloat,
         material: NSVisualEffectView.Material,
-        showsBorder: Bool = true,
         @ViewBuilder content: () -> Content
     ) {
         self.cornerRadius = cornerRadius
         self.material = material
-        self.showsBorder = showsBorder
         self.content = content()
     }
 
@@ -32,7 +29,11 @@ struct LiquidGlassSurface<Content: View>: View {
             if colorScheme == .light || reduceTransparency || colorSchemeContrast == .increased {
                 content
                     .background(shape.fill(Color(nsColor: .windowBackgroundColor)))
+                    .clipShape(shape)
+                    .overlay { fallbackBorder(in: shape) }
             } else if #available(macOS 26.0, *) {
+                // One native surface owns the refraction and edge highlight.
+                // Do not flatten it with an additional fill or stroke.
                 content
                     .glassEffect(.regular, in: shape)
             } else {
@@ -40,18 +41,19 @@ struct LiquidGlassSurface<Content: View>: View {
                     .background {
                         VisualEffectBackground(material: material)
                     }
+                    .clipShape(shape)
+                    .overlay { fallbackBorder(in: shape) }
             }
         }
-        .clipShape(shape)
-        .overlay {
-            if showsBorder {
-                shape
-                    .strokeBorder(
-                        Color.primary.opacity(colorSchemeContrast == .increased ? 0.24 : (colorScheme == .dark ? 0.14 : 0.10)),
-                        lineWidth: colorSchemeContrast == .increased ? 1 : 0.5
-                    )
-            }
-        }
+    }
+
+    private func fallbackBorder(in shape: RoundedRectangle) -> some View {
+        shape.strokeBorder(
+            colorSchemeContrast == .increased
+                ? Color.primary.opacity(0.32)
+                : Color(nsColor: .separatorColor),
+            lineWidth: colorSchemeContrast == .increased ? 1 : 0.5
+        )
     }
 }
 

@@ -49,7 +49,7 @@ enum PanelMetricsLayout {
     }
 
     static func controlCenterPanelSize(settings: AppSettings) -> NSSize {
-        systemDefaultPanelSize(settings: settings)
+        NSSize(width: DesignTokens.panelWidth, height: controlCenterIntrinsicHeight(settings: settings))
     }
 
     /// Each page uses its own height; the controller keeps the top edge anchored.
@@ -59,7 +59,11 @@ enum PanelMetricsLayout {
     ) -> NSSize {
         NSSize(
             width: DesignTokens.panelWidth,
-            height: page == .settings ? settingsIdealHeight : controlCenterIntrinsicHeight(settings: settings)
+            height: page == .settings ? settingsIdealHeight : (
+                settings.panelStyle == .classic
+                    ? classicIntrinsicHeight(settings: settings)
+                    : controlCenterIntrinsicHeight(settings: settings)
+            )
         )
     }
 
@@ -133,6 +137,7 @@ struct StatusPanelView: View {
     @ObservedObject var monitor: SystemMonitor
     @ObservedObject var settings: AppSettings
     let openSettings: () -> Void
+    var usesExternalSystemChrome: Bool = false
 
     static func contentSize(settings: AppSettings) -> NSSize {
         PanelMetricsLayout.classicPanelSize(settings: settings)
@@ -187,8 +192,12 @@ struct StatusPanelView: View {
         .padding(.horizontal, DesignTokens.panelContentHorizontal)
         .padding(.bottom, DesignTokens.panelContentBottom)
         .frame(width: size.width, height: size.height, alignment: .topLeading)
-        // Dark mode uses the popover material; light mode covers it with a solid fill.
-        .background(ClassicPanelBackground(showsBorder: false, cornerRadius: 0))
+        .background {
+            if !usesExternalSystemChrome {
+                // Legacy NSPopover supplies dark material; light content covers it.
+                ClassicPanelBackground(showsBorder: false, cornerRadius: 0)
+            }
+        }
     }
 
     private var classicRowDivider: some View {
@@ -249,12 +258,23 @@ struct SystemDefaultPanelView: View {
         SystemDefaultPanelSurface {
             ZStack {
                 if navigation.page == .overview {
-                    ControlCenterPanelView(
-                        monitor: monitor,
-                        settings: settings,
-                        openSettings: navigation.showSettings,
-                        showsChrome: false
-                    )
+                    Group {
+                        if settings.panelStyle == .classic {
+                            StatusPanelView(
+                                monitor: monitor,
+                                settings: settings,
+                                openSettings: navigation.showSettings,
+                                usesExternalSystemChrome: true
+                            )
+                        } else {
+                            ControlCenterPanelView(
+                                monitor: monitor,
+                                settings: settings,
+                                openSettings: navigation.showSettings,
+                                showsChrome: false
+                            )
+                        }
+                    }
                     .transition(.opacity)
                 } else {
                     StandaloneSettingsPanelView(
@@ -378,8 +398,6 @@ struct ControlCenterPanelView: View {
 
 /// Shared chrome: solid light surfaces and adaptive dark system material.
 struct SystemDefaultPanelSurface<Content: View>: View {
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     private let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -387,30 +405,12 @@ struct SystemDefaultPanelSurface<Content: View>: View {
     }
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: DesignTokens.panelCornerRadius, style: .continuous)
-
         LiquidGlassSurface(
             cornerRadius: DesignTokens.panelCornerRadius,
-            material: .popover,
-            showsBorder: false
+            material: .popover
         ) {
             content
         }
-        .overlay {
-            shape.strokeBorder(
-                colorSchemeContrast == .increased
-                    ? Color.primary.opacity(0.32)
-                    : (colorScheme == .light
-                        ? Color(nsColor: .separatorColor)
-                        : Color.white.opacity(0.12)),
-                lineWidth: colorSchemeContrast == .increased ? 1 : 0.5
-            )
-        }
-        .shadow(
-            color: Color.black.opacity(colorScheme == .light ? 0.11 : 0.28),
-            radius: 16,
-            y: 6
-        )
     }
 }
 
@@ -433,12 +433,12 @@ struct StandaloneSettingsPanelView: View {
 
     @ViewBuilder
     var body: some View {
-        if isClassic {
+        if usesExternalSystemChrome {
+            panelContent
+        } else if isClassic {
             panelContent
                 // NSPopover draws the outer frame for Classic.
                 .background(ClassicPanelBackground(showsBorder: false, cornerRadius: 0))
-        } else if usesExternalSystemChrome {
-            panelContent
         } else {
             SystemDefaultPanelSurface {
                 panelContent
