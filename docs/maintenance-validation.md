@@ -61,6 +61,10 @@ CONFIGURATION=Release ./script/build_and_run.sh --verify
 
 最终 `swift test` 通过全部 56 项；`CONFIGURATION=Release ./script/build_and_run.sh --verify` 完成签名校验、Release 构建和启动验证。英文经典列表在最后调整后重新运行检查，上下行数值和单位均保持完整。临时测试应用已退出并清理各自的测试偏好。
 
+## 面板圆角外黑边修复（2026-09-26）
+
+macOS 26 及以上的概览与设置共用透明浮动窗口。移除这一路径的 AppKit 窗口阴影，避免它在原生玻璃圆角外形成深色轮廓；macOS 14–15 的窗口阴影与经典 NSPopover 行为保持不变。`swift test` 的 57 项测试通过；Debug 与 Release 应用构建、签名验证及 `git diff --check` 均通过。未取得修复后面板的可视截图，因此深浅色与不同背景下的边缘效果仍需实机目视确认。
+
 ## 统一深色系统玻璃表面（2026-09-15）
 
 macOS 26 及以上的经典布局改用与卡片布局相同的透明浮动窗口，避免在 NSPopover 自带材质上叠加第二层玻璃。经典仍是连续列表，设置和概览在同一窗口内切换；macOS 14–15 的经典 NSPopover 路径保留。浮动窗口按当前布局和页面计算高度，设置中切换布局不会改变设置页的高度。

@@ -496,8 +496,13 @@ final class StatusItemController: NSObject {
         panel.onCancel = onOutsideClick
         panel.backgroundColor = .clear
         panel.isOpaque = false
-        // AppKit owns the exterior shadow; the surface owns its material and edge.
-        panel.hasShadow = true
+        // Native glass already supplies its own edge treatment. An additional
+        // window shadow can outline the transparent area beyond its rounded edge.
+        if #available(macOS 26.0, *) {
+            panel.hasShadow = false
+        } else {
+            panel.hasShadow = true
+        }
         panel.hidesOnDeactivate = false
         panel.level = .popUpMenu
         panel.collectionBehavior = [.transient, .canJoinAllSpaces, .fullScreenAuxiliary]
@@ -585,7 +590,9 @@ final class StatusItemController: NSObject {
         let frame = NSRect(origin: panelOrigin(relativeTo: button, size: size), size: size)
         guard panel.frame != frame else { return }
         panel.setFrame(frame, display: true)
-        panel.invalidateShadow()
+        if #unavailable(macOS 26.0) {
+            panel.invalidateShadow()
+        }
     }
 }
 

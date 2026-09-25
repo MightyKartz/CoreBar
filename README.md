@@ -13,7 +13,7 @@ CoreBar is a quiet macOS menu bar monitor for CPU, memory, disk, and network act
 - Current download and upload speed in the detail panel.
 - Classic list and Cards panels, with a direct return from settings to usage.
 - Opaque panel backgrounds in light mode, system glass in dark mode, and neutral native settings controls in both appearances.
-- On macOS 26 and later, Classic and Cards share one native glass surface, with an in-place return from settings and a system window shadow. Classic keeps its continuous data list; macOS 14–15 retain the original popover presentation.
+- On macOS 26 and later, Classic and Cards share one native glass surface, with an in-place return from settings and no extra window shadow around the rounded edge. Classic keeps its continuous data list; macOS 14–15 retain the original popover presentation.
 - A settings window for launch at login, refresh interval, visible metrics, panel style, and threshold colors.
 - Card overviews resize with visible metrics. Overall health includes hidden CPU, memory, and disk metrics, and marks a hidden alert source explicitly.
 - Capacity details remain readable; network rates identify combined traffic, and chart help describes the latest 30 samples and automatic network scaling.
