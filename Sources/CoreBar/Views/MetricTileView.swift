@@ -233,13 +233,13 @@ struct NetworkTileView: View {
                     .minimumScaleFactor(0.8)
             }
 
-            HStack {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(AppText.metricTitle(.network))
                     .font(.system(size: 12, weight: .semibold))
-                Spacer(minLength: 4)
                 Text(AppText.combinedTraffic)
-                    .font(.system(size: 12))
+                    .font(.system(size: 10))
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .foregroundStyle(DesignTokens.supportingText)
             .padding(.top, 10)
 

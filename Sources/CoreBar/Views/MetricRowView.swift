@@ -46,6 +46,10 @@ struct MetricRowView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.primary)
 
+                    if metric.kind == .memory {
+                        Text(AppText.estimatedPressure)
+                            .font(.system(size: 10)).foregroundStyle(DesignTokens.supportingText)
+                    }
                     Text(compactDetailText)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(DesignTokens.supportingText)
@@ -62,9 +66,6 @@ struct MetricRowView: View {
                         .foregroundStyle(valueColor)
                         .contentTransition(reduceMotion ? .identity : .numericText(value: metric.value))
                         .animation(DesignTokens.valueAnimation(reduceMotion: reduceMotion), value: metric.value)
-                    if metric.kind == .memory {
-                        Text(AppText.estimatedPressure).font(.system(size: 10)).foregroundStyle(DesignTokens.supportingText)
-                    }
                 }
                 .help(AppText.metricHint(metric.kind))
                 if let openDetails { MetricDetailButton(action: openDetails) }
@@ -171,9 +172,11 @@ struct NetworkRowView: View {
                 ClassicMetricIcon(systemName: "waveform.path.ecg", accent: accent)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(AppText.metricTitle(.network))
+                    Text("\(AppText.metricTitle(.network)) · \(AppText.combinedTraffic)")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(AppText.download) \(network.downloadBytesPerSecond.byteRateText)")
@@ -189,9 +192,6 @@ struct NetworkRowView: View {
                 Spacer(minLength: 8)
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(AppText.combinedTraffic)
-                        .font(.system(size: 12))
-                        .foregroundStyle(DesignTokens.supportingText)
                     Text(totalRate.byteRateText)
                         .font(.system(size: 15, weight: .semibold).monospacedDigit())
                         .foregroundStyle(.primary)

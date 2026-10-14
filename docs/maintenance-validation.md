@@ -124,3 +124,9 @@ macOS 26 及以上的经典布局改用与卡片布局相同的透明浮动窗�
 - Per user request, visual inspection hints now show only metric labels and values; the timestamp row, fill/material background and padding are removed. Network detail upload/download remain separate lines. Real timestamps continue to locate samples and describe them for accessibility.
 - Reserved hint slots shrink to 16 points in overview and 32 in details; classic rows and cards use 116/176-point minimums. Plot heights and selection logic are unchanged.
 - 66 unit tests, Release application build, strict signature verification and whitespace checks passed. Hidden-window selected-hint renders covered classic/cards, English/Chinese and light/dark; the inspected card overview displayed only text, without hint time or background. Selection was seeded in a temporary source copy as described above; no real pointer or glass compositing verification was performed and no test window was shown.
+
+### 2026-10-14 — Numeric overview value columns
+
+- Overview primary value columns now show numbers and units only. Classic memory's pressure caption moves below the title on the left; classic network identifies combined traffic in the left title. Card network's combined caption moves below its left title. Pressure calculations, capacity bars and sampling behavior are unchanged.
+- Release application build, strict signature verification and diff whitespace checks passed. Hidden-window rendering covered classic/cards, Chinese/English and light/dark with long capacity/rate fixtures. Inspected classic dark Chinese and card light English captures retained readable numeric values and left-aligned semantic descriptions. No test window was shown; native glass blending and pointer interactions were not exercised.
+- This is a text/layout change; unit tests were not rerun. The preceding 66-test result remains historical evidence, not a new test run for this revision.
