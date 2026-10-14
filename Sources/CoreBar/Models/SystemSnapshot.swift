@@ -35,12 +35,30 @@ struct NetworkSnapshot {
     static let zero = NetworkSnapshot(downloadBytesPerSecond: 0, uploadBytesPerSecond: 0)
 }
 
+struct DiskVolumeSnapshot: Identifiable {
+    let id: String
+    let name: String
+    let mountPath: String
+    let freeBytes: UInt64?
+    let totalBytes: UInt64?
+
+    var usedBytes: UInt64? {
+        guard let freeBytes, let totalBytes, totalBytes > 0 else { return nil }
+        return totalBytes - min(freeBytes, totalBytes)
+    }
+    var usedFraction: Double? {
+        guard let usedBytes, let totalBytes else { return nil }
+        return Double(usedBytes) / Double(totalBytes)
+    }
+}
+
 struct SystemSnapshot {
     let cpu: MetricSnapshot
     let memory: MetricSnapshot
     let disk: MetricSnapshot
     let network: NetworkSnapshot
     let timestamp: Date
+    var externalDisks: [DiskVolumeSnapshot] = []
 
     var metrics: [MetricSnapshot] {
         [cpu, memory, disk]

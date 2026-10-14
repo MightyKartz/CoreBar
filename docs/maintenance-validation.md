@@ -95,3 +95,11 @@ macOS 26 及以上的经典布局改用与卡片布局相同的透明浮动窗�
 - 英文经典概览检查了 120/128 GB 内存、960 GB/2 TB 磁盘及上下行各 123.5 MB/s 的固定边界数据，文字与单位完整显示。这些数值仅用于布局验证，不代表实际系统读数。
 
 英文概览验证后主机锁屏，未继续英文设置、菜单栏重复点击及点击外部关闭的本轮手动复测。未切换系统级减少透明度或增强对比度设置，也未做完整 VoiceOver、多屏或 macOS 14–26 实机验证；这些回退目前依据代码检查及已有测试，不宣称已完成实际系统验收。临时验证进程与测试偏好在检查后清理。
+
+### 2026-10-14 — External volumes and hidden detail scroll indicators
+
+- Detail scroll indicators are hidden without disabling scrolling. Disk details list mounted local external volumes and each partition separately, with names, mount paths and independent capacity bars. Missing capacity remains unavailable rather than zero usage.
+- Volume metadata shares the 60-second disk cache. Workspace mount, unmount and rename notifications invalidate it for the next regular sample; navigation does not sample. Overview history and overall alerts retain their home-volume scope.
+- `swift test`: 63 tests passed, including injected external-volume cache, removal, rename and missing/invalid capacity cases. Release Xcode build and strict signature verification passed.
+- A background-only probe signed with the app's existing sandbox entitlement enumerated the attached external `Untitled` volume and read its capacity without additional entitlements. No file contents were read. Physical reconnect/rename notifications were not manually exercised.
+- Hidden-window rendering covered classic/cards, light/dark and Chinese/English, using external-volume fixtures. All windows remained unshown. Solid offscreen captures do not establish native glass compositing, real pointer scrolling or complete VoiceOver behavior.

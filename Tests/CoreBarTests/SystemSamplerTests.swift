@@ -192,6 +192,42 @@ final class SystemSamplerTests: XCTestCase {
         XCTAssertEqual(DiskReading(free: 1, total: 0).usedFraction, 0)
     }
 
+    func testExternalVolumesRefreshWithDiskCacheAndMountChanges() {
+        var uptime = 0.0
+        var disks = [DiskVolumeSnapshot(id: "usb", name: "Backup", mountPath: "/Volumes/Backup",
+                                       freeBytes: 200, totalBytes: 1_000)]
+        var reads = 0
+        let sampler = SystemSampler(diskReader: diskReading, externalDiskReader: {
+            reads += 1
+            return disks
+        }, networkReader: { [:] }, monotonicClock: { uptime })
+        XCTAssertEqual(sampler.snapshot().externalDisks.first?.usedFraction, 0.8)
+        disks = []
+        uptime = 2
+        XCTAssertEqual(sampler.snapshot().externalDisks.count, 1)
+        sampler.invalidateDiskCache()
+        XCTAssertTrue(sampler.snapshot().externalDisks.isEmpty)
+        XCTAssertEqual(reads, 2)
+        disks = [DiskVolumeSnapshot(id: "usb", name: "Renamed", mountPath: "/Volumes/Renamed",
+                                  freeBytes: 100, totalBytes: 1_000)]
+        uptime = 62
+        XCTAssertEqual(sampler.snapshot().externalDisks.first?.name, "Renamed")
+        XCTAssertEqual(reads, 3)
+    }
+
+    func testExternalVolumeMissingAndInvalidCapacityIsNotZeroUsage() {
+        let unavailable = DiskVolumeSnapshot(id: "1", name: "USB", mountPath: "/Volumes/USB",
+                                             freeBytes: nil, totalBytes: 1_000)
+        XCTAssertNil(unavailable.usedFraction)
+        let empty = DiskVolumeSnapshot(id: "2", name: "USB", mountPath: "/Volumes/USB",
+                                       freeBytes: 0, totalBytes: 0)
+        XCTAssertNil(empty.usedFraction)
+        let clamped = DiskVolumeSnapshot(id: "3", name: "USB", mountPath: "/Volumes/USB",
+                                         freeBytes: 2_000, totalBytes: 1_000)
+        XCTAssertEqual(clamped.usedBytes, 0)
+        XCTAssertEqual(clamped.usedFraction, 0)
+    }
+
     private func diskReading() -> DiskReading {
         DiskReading(free: 500, total: 1_000)
     }

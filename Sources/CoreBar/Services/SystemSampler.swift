@@ -1,9 +1,13 @@
+import AppKit
 import Darwin
 import Foundation
 
 final class SystemSampler {
     private let diskRefreshInterval: TimeInterval
     private let diskReader: () -> DiskReading
+    private let externalDiskReader: () -> [DiskVolumeSnapshot]
+    private var cachedExternalDisks: [DiskVolumeSnapshot] = []
+    private var volumeObservers: [NSObjectProtocol] = []
     private let networkReader: () -> NetworkInterfaceCounters?
     private let monotonicClock: () -> TimeInterval
     private var previousCPUTicks: CPUTicks?
@@ -15,14 +19,30 @@ final class SystemSampler {
     init(
         diskRefreshInterval: TimeInterval = 60,
         diskReader: @escaping () -> DiskReading = SystemSampler.readDisk,
+        externalDiskReader: @escaping () -> [DiskVolumeSnapshot] = SystemSampler.readExternalDisks,
         networkReader: @escaping () -> NetworkInterfaceCounters? = SystemSampler.readNetworkCounters,
         monotonicClock: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
     ) {
         self.diskRefreshInterval = diskRefreshInterval
         self.diskReader = diskReader
+        self.externalDiskReader = externalDiskReader
         self.networkReader = networkReader
         self.monotonicClock = monotonicClock
+        let center = NSWorkspace.shared.notificationCenter
+        volumeObservers = [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
+                           NSWorkspace.didRenameVolumeNotification].map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.invalidateDiskCache()
+            }
+        }
     }
+
+    deinit {
+        for observer in volumeObservers { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
+    }
+
+    // Mount changes are consumed by the next regular sample, never by navigation.
+    func invalidateDiskCache() { lastDiskSampleAt = nil }
 
     func primeCPU() {
         previousCPUTicks = currentCPUTicks()
@@ -73,7 +93,8 @@ final class SystemSampler {
                 coreCount: nil
             ),
             network: network,
-            timestamp: now
+            timestamp: now,
+            externalDisks: cachedExternalDisks
         )
     }
 
@@ -158,8 +179,25 @@ final class SystemSampler {
 
         let disk = diskReader()
         cachedDisk = disk
+        cachedExternalDisks = externalDiskReader()
         lastDiskSampleAt = sampleTime
         return disk
+    }
+
+    private static func readExternalDisks() -> [DiskVolumeSnapshot] {
+        let keys: Set<URLResourceKey> = [.volumeNameKey, .volumeUUIDStringKey, .volumeIsInternalKey,
+            .volumeIsLocalKey, .volumeTotalCapacityKey, .volumeAvailableCapacityKey]
+        let urls = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: Array(keys),
+                                                        options: [.skipHiddenVolumes]) ?? []
+        return urls.compactMap { url -> DiskVolumeSnapshot? in
+            guard let info = try? url.resourceValues(forKeys: keys),
+                  info.volumeIsLocal == true, info.volumeIsInternal == false else { return nil }
+            return DiskVolumeSnapshot(id: info.volumeUUIDString ?? url.path,
+                                      name: info.volumeName ?? url.lastPathComponent,
+                                      mountPath: url.path,
+                                      freeBytes: info.volumeAvailableCapacity.map { UInt64(max(0, $0)) },
+                                      totalBytes: info.volumeTotalCapacity.map { UInt64(max(0, $0)) })
+        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     private static func readDisk() -> DiskReading {

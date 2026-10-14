@@ -55,6 +55,13 @@ enum AppText {
     static var combinedTraffic: String { choose(en: "Combined", zh: "收发合计") }
     static var pressure: String { choose(en: "Pressure", zh: "压力") }
     static var estimatedPressure: String { choose(en: "Estimated pressure", zh: "压力估算") }
+    static var externalDisks: String { choose(en: "External volumes", zh: "外置磁盘") }
+    static var noExternalDisks: String { choose(en: "No mounted external volumes", zh: "未检测到已挂载的外置磁盘") }
+    static var capacityUnavailable: String { choose(en: "Capacity unavailable", zh: "容量暂不可读取") }
+    static var externalDiskHint: String {
+        choose(en: "Mounted local external volumes; partitions are listed separately. Capacities refresh within 60 seconds. Overview and alerts refer to the home volume.",
+               zh: "显示已挂载的本地外置卷，多分区分别列出；容量最多每 60 秒更新。概览与整体告警仍对应用户目录所在卷。")
+    }
     static var capacityUsage: String { choose(en: "Capacity used", zh: "容量占用") }
     static var showDetails: String { choose(en: "Show metric details", zh: "查看指标详情") }
     static var recentAverage: String { choose(en: "Recent average", zh: "近期平均") }

@@ -66,6 +66,7 @@ struct MetricDetailView: View {
                     trend
                     statistics
                     supportingDetails
+                    if kind == .disk { externalDisks }
                     Divider()
                     if kind != .memory {
                         Text(AppText.metricExplanation(kind))
@@ -77,6 +78,7 @@ struct MetricDetailView: View {
                 .padding(.top, 4)
                 .padding(.bottom, 6)
             }
+            .scrollIndicators(.hidden)
         }
         .padding(.top, DesignTokens.panelContentTop)
         .padding(.horizontal, DesignTokens.panelContentHorizontal)
@@ -207,6 +209,40 @@ struct MetricDetailView: View {
             } else {
                 Text(AppText.thresholdExplanation(kind)).font(.system(size: 11)).foregroundStyle(DesignTokens.supportingText)
             }
+        }
+    }
+
+    private var externalDisks: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider()
+            Text(AppText.externalDisks).font(.system(size: 13, weight: .semibold))
+            if monitor.snapshot.externalDisks.isEmpty {
+                Text(AppText.noExternalDisks).font(.system(size: 12)).foregroundStyle(DesignTokens.supportingText)
+            }
+            ForEach(monitor.snapshot.externalDisks) { disk in
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(disk.name, systemImage: "externaldrive")
+                        .font(.system(size: 12, weight: .medium))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(disk.mountPath).font(.system(size: 10)).foregroundStyle(DesignTokens.supportingText)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let fraction = disk.usedFraction, let used = disk.usedBytes,
+                       let total = disk.totalBytes, let free = disk.freeBytes {
+                        detailRow(AppText.capacityUsage, fraction.percentText)
+                        MetricProgressBar(value: fraction, color: DesignTokens.accent(
+                            for: HealthRules.level(for: fraction, warning: 0.85, critical: 0.95),
+                            kind: .disk, usesThresholdColors: settings.useThresholdColors), thresholds: [0.85, 0.95])
+                        detailRow(AppText.used, used.byteText)
+                        detailRow(AppText.totalCapacity, total.byteText)
+                        detailRow(AppText.free, min(free, total).byteText)
+                    } else {
+                        Text(AppText.capacityUnavailable).font(.system(size: 12)).foregroundStyle(DesignTokens.supportingText)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            Text(AppText.externalDiskHint).font(.system(size: 11)).foregroundStyle(DesignTokens.supportingText)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
