@@ -95,7 +95,7 @@ struct MetricTileView: View {
                 valueKind: metric.kind,
                 allowsInspection: true
             )
-            .frame(height: 28)
+            .frame(height: 28 + DesignTokens.overviewInspectionHeight)
         case .memory, .disk:
             VStack(alignment: .leading, spacing: 3) {
                 if let capacity = metric.capacityFraction {
@@ -262,7 +262,7 @@ struct NetworkTileView: View {
                 valueKind: .network,
                 allowsInspection: true
             )
-            .frame(height: 28)
+            .frame(height: 28 + DesignTokens.overviewInspectionHeight)
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: DesignTokens.tileMinHeight, alignment: .topLeading)

@@ -26,8 +26,39 @@ final class MetricSparklineTests: XCTestCase {
         XCTAssertGreaterThan(points[1].y, points[2].y)
     }
 
-    func testPointsRequireAtLeastTwoSamples() {
-        XCTAssertTrue(MetricSparklineView.points(for: [0.5], in: CGSize(width: 40, height: 20), fixedRange: 0...1).isEmpty)
+    func testSingleSampleHasVisibleAndInspectablePoint() {
+        let date = Date(timeIntervalSince1970: 10)
+        let points = MetricSparklineView.points(for: [0.5], in: CGSize(width: 40, height: 20), fixedRange: 0...1, timestamps: [date])
+        XCTAssertEqual(points, [CGPoint(x: 20, y: 10)])
+        XCTAssertEqual(MetricSparklineView.nearestSampleDate(at: 0, points: points, timestamps: [date]), date)
+        XCTAssertTrue(MetricSparklineView.points(for: [], in: CGSize(width: 40, height: 20), fixedRange: 0...1).isEmpty)
+    }
+
+    func testInspectionUsesNearestRealSampleAndClampsAtEdges() {
+        let dates = [0.0, 1.0, 10.0].map { Date(timeIntervalSince1970: $0) }
+        let points = MetricSparklineView.points(for: [0.2, 0.3, 0.4], in: CGSize(width: 100, height: 30), fixedRange: 0...1, timestamps: dates)
+        XCTAssertEqual(MetricSparklineView.nearestSampleDate(at: -10, points: points, timestamps: dates), dates[0])
+        for x in stride(from: 6.0, through: 54.0, by: 1) {
+            XCTAssertEqual(MetricSparklineView.nearestSampleDate(at: x, points: points, timestamps: dates), dates[1])
+        }
+        XCTAssertEqual(MetricSparklineView.nearestSampleDate(at: 110, points: points, timestamps: dates), dates[2])
+        XCTAssertNil(MetricSparklineView.nearestSampleDate(at: 0, points: points, timestamps: []))
+    }
+
+    func testInspectionLabelsSeparatePressureCapacityAndCombinedTraffic() {
+        let dates = [Date(timeIntervalSince1970: 10)]
+        let memory = MetricSparklineView.inspectionSample(at: 0, values: [0.53], timestamps: dates, kind: .memory)
+        XCTAssertEqual(memory?.readings.first?.title, AppText.estimatedPressure)
+        XCTAssertEqual(memory?.readings.first?.value, "53%")
+        let disk = MetricSparklineView.inspectionSample(at: 0, values: [0.94], timestamps: dates, kind: .disk)
+        XCTAssertEqual(disk?.readings.first?.title, AppText.inspectionMetricTitle(.disk))
+        let network = MetricSparklineView.inspectionSample(at: 0, values: [12_400_000], timestamps: dates, kind: .network)
+        XCTAssertEqual(network?.readings.first?.title, AppText.combinedTraffic)
+        let dual = MetricSparklineView.inspectionSample(at: 0, values: [6_000_000], timestamps: dates, kind: .network, secondaryValues: [6_400_000])
+        XCTAssertEqual(dual?.readings.map(\.title), [AppText.download, AppText.upload])
+        XCTAssertEqual(dual?.readings.map(\.value), [Double(6_000_000).byteRateText, Double(6_400_000).byteRateText])
+        XCTAssertNil(MetricSparklineView.inspectionSample(at: 0, values: [1], timestamps: [], kind: .cpu))
+        XCTAssertNil(MetricSparklineView.inspectionSample(at: 0, values: [1], timestamps: dates, kind: .network, secondaryValues: [1, 2]))
     }
 
     func testRollingNetworkCeilingKeepsHeadroomAndStableSteps() {

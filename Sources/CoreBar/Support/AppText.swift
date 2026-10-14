@@ -55,6 +55,14 @@ enum AppText {
     static var combinedTraffic: String { choose(en: "Combined", zh: "收发合计") }
     static var pressure: String { choose(en: "Pressure", zh: "压力") }
     static var estimatedPressure: String { choose(en: "Estimated pressure", zh: "压力估算") }
+    static func inspectionMetricTitle(_ kind: MetricKind) -> String {
+        switch kind {
+        case .cpu: choose(en: "CPU usage", zh: "CPU 使用率")
+        case .memory: estimatedPressure
+        case .disk: choose(en: "Home volume capacity", zh: "主卷容量占用")
+        case .network: combinedTraffic
+        }
+    }
     static var homeVolume: String { choose(en: "Home volume", zh: "用户目录所在卷") }
     static var homeVolumeHistory: String { choose(en: "Home volume history", zh: "用户目录所在卷历史") }
     static var externalDisks: String { choose(en: "External volumes", zh: "外置磁盘") }

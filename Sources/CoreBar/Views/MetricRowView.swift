@@ -93,7 +93,7 @@ struct MetricRowView: View {
                 valueKind: metric.kind,
                 allowsInspection: true
             )
-            .frame(height: 22)
+            .frame(height: 22 + DesignTokens.overviewInspectionHeight)
         case .progress:
             VStack(alignment: .leading, spacing: 4) {
                 if let capacity = metric.capacityFraction {
@@ -212,7 +212,7 @@ struct NetworkRowView: View {
                 valueKind: .network,
                 allowsInspection: true
             )
-            .frame(height: 22)
+            .frame(height: 22 + DesignTokens.overviewInspectionHeight)
         }
         .padding(.vertical, 9)
         .frame(maxWidth: .infinity, minHeight: DesignTokens.classicRowMinHeight, alignment: .leading)

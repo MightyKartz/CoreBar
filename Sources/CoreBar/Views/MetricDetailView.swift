@@ -150,7 +150,7 @@ struct MetricDetailView: View {
                 secondaryValues: isNetwork ? monitor.history.upload : [],
                 secondaryColor: accent
             )
-            .frame(height: kind == .disk ? DesignTokens.diskDetailChartHeight : DesignTokens.metricDetailChartHeight)
+            .frame(height: (kind == .disk ? DesignTokens.diskDetailChartHeight : DesignTokens.metricDetailChartHeight) + DesignTokens.detailInspectionHeight)
             HStack {
                 Text(valueText(0))
                 Spacer()
