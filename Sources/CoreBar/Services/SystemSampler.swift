@@ -94,7 +94,8 @@ final class SystemSampler {
             ),
             network: network,
             timestamp: now,
-            externalDisks: cachedExternalDisks
+            externalDisks: cachedExternalDisks,
+            homeVolumeName: disk.volumeName
         )
     }
 
@@ -210,7 +211,9 @@ final class SystemSampler {
                 return DiskReading(free: 0, total: 0)
             }
 
-            return DiskReading(free: free, total: total)
+            let homeURL = URL(fileURLWithPath: NSHomeDirectory())
+            let name = try? homeURL.resourceValues(forKeys: [.volumeNameKey]).volumeName
+            return DiskReading(free: free, total: total, volumeName: name)
         } catch {
             return DiskReading(free: 0, total: 0)
         }
@@ -324,10 +327,12 @@ struct MemoryReading {
 struct DiskReading {
     let free: UInt64
     let total: UInt64
+    let volumeName: String?
 
-    init(free: UInt64, total: UInt64) {
+    init(free: UInt64, total: UInt64, volumeName: String? = nil) {
         self.free = min(free, total)
         self.total = total
+        self.volumeName = volumeName
     }
 
     var usedFraction: Double {

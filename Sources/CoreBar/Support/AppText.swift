@@ -55,6 +55,8 @@ enum AppText {
     static var combinedTraffic: String { choose(en: "Combined", zh: "收发合计") }
     static var pressure: String { choose(en: "Pressure", zh: "压力") }
     static var estimatedPressure: String { choose(en: "Estimated pressure", zh: "压力估算") }
+    static var homeVolume: String { choose(en: "Home volume", zh: "用户目录所在卷") }
+    static var homeVolumeHistory: String { choose(en: "Home volume history", zh: "用户目录所在卷历史") }
     static var externalDisks: String { choose(en: "External volumes", zh: "外置磁盘") }
     static var noExternalDisks: String { choose(en: "No mounted external volumes", zh: "未检测到已挂载的外置磁盘") }
     static var capacityUnavailable: String { choose(en: "Capacity unavailable", zh: "容量暂不可读取") }

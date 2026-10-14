@@ -63,10 +63,17 @@ struct MetricDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     hero
-                    trend
-                    statistics
-                    supportingDetails
-                    if kind == .disk { externalDisks }
+                    if kind == .disk {
+                        supportingDetails
+                        externalDisks
+                        Divider()
+                        trend
+                        statistics
+                    } else {
+                        trend
+                        statistics
+                        supportingDetails
+                    }
                     Divider()
                     if kind != .memory {
                         Text(AppText.metricExplanation(kind))
@@ -87,6 +94,12 @@ struct MetricDetailView: View {
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: 6) {
+            if kind == .disk {
+                Label(monitor.snapshot.homeVolumeName ?? AppText.homeVolume, systemImage: "internaldrive")
+                    .font(.system(size: 13, weight: .semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel("\(AppText.homeVolume): \(monitor.snapshot.homeVolumeName ?? AppText.homeVolume)")
+            }
             Text(kind == .memory ? AppText.estimatedPressure : (isNetwork ? AppText.combinedTraffic : AppText.currentLoadFor(kind)))
                 .font(.system(size: 12)).foregroundStyle(DesignTokens.supportingText)
             HStack(alignment: .firstTextBaseline) {
@@ -113,7 +126,7 @@ struct MetricDetailView: View {
     private var trend: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(AppText.recentHistory).font(.system(size: 12, weight: .semibold))
+                Text(kind == .disk ? AppText.homeVolumeHistory : AppText.recentHistory).font(.system(size: 12, weight: .semibold))
                 Spacer(minLength: 4)
                 Text(AppText.historySummary(timestamps: monitor.history.timestamps))
                     .font(.system(size: 10)).foregroundStyle(DesignTokens.supportingText)
@@ -137,7 +150,7 @@ struct MetricDetailView: View {
                 secondaryValues: isNetwork ? monitor.history.upload : [],
                 secondaryColor: accent
             )
-            .frame(height: 130)
+            .frame(height: kind == .disk ? DesignTokens.diskDetailChartHeight : DesignTokens.metricDetailChartHeight)
             HStack {
                 Text(valueText(0))
                 Spacer()

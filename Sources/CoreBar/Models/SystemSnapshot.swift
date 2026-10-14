@@ -59,6 +59,7 @@ struct SystemSnapshot {
     let network: NetworkSnapshot
     let timestamp: Date
     var externalDisks: [DiskVolumeSnapshot] = []
+    var homeVolumeName: String? = nil
 
     var metrics: [MetricSnapshot] {
         [cpu, memory, disk]

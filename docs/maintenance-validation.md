@@ -103,3 +103,9 @@ macOS 26 及以上的经典布局改用与卡片布局相同的透明浮动窗�
 - `swift test`: 63 tests passed, including injected external-volume cache, removal, rename and missing/invalid capacity cases. Release Xcode build and strict signature verification passed.
 - A background-only probe signed with the app's existing sandbox entitlement enumerated the attached external `Untitled` volume and read its capacity without additional entitlements. No file contents were read. Physical reconnect/rename notifications were not manually exercised.
 - Hidden-window rendering covered classic/cards, light/dark and Chinese/English, using external-volume fixtures. All windows remained unshown. Solid offscreen captures do not establish native glass compositing, real pointer scrolling or complete VoiceOver behavior.
+
+### 2026-10-14 — Capacity-first disk detail layout
+
+- Disk details now show the home volume name above the main percentage, then home/external capacity information, followed by a 64-point home-volume history chart (other detail charts remain 130 points). Name metadata shares the existing disk cache and falls back to localized home-volume wording when unavailable.
+- `swift test`: 64 tests passed, including home-volume name propagation, cache reuse and invalidation. Release Xcode build passed. Hidden-window classic/cards, Chinese/English and light/dark renders passed; the inspected default-size disk view showed the main volume and first external volume capacities before the fold. No test window was shown.
+- These captures validate solid content layout, not native glass blending or real pointer interaction. External volumes still have independent current capacity values; the historical chart continues to represent only the home volume.

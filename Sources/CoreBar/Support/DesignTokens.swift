@@ -26,6 +26,8 @@ enum DesignTokens {
     static let classicRowMinHeight: CGFloat = 108
     static let trendLineWidth: CGFloat = 1.75
     static let chartGuideWidth: CGFloat = 0.5
+    static let diskDetailChartHeight: CGFloat = 64
+    static let metricDetailChartHeight: CGFloat = 130
     static let detailPanelHeight: CGFloat = 540
     /// Capacity and rate context stays legible on both solid and glass surfaces.
     static var supportingText: Color { Color.primary.opacity(0.8) }

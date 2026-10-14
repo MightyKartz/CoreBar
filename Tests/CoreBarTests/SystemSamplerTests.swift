@@ -27,6 +27,19 @@ final class SystemSamplerTests: XCTestCase {
         XCTAssertNotEqual(second.freeBytes, third.freeBytes)
     }
 
+    func testHomeVolumeNameTravelsWithCachedCapacitySnapshot() {
+        var uptime = 0.0
+        var name = "System Volume"
+        let sampler = SystemSampler(diskReader: { DiskReading(free: 500, total: 1_000, volumeName: name) },
+                                    externalDiskReader: { [] }, networkReader: { [:] }, monotonicClock: { uptime })
+        XCTAssertEqual(sampler.snapshot().homeVolumeName, "System Volume")
+        name = "Renamed Volume"
+        uptime = 2
+        XCTAssertEqual(sampler.snapshot().homeVolumeName, "System Volume")
+        sampler.invalidateDiskCache()
+        XCTAssertEqual(sampler.snapshot().homeVolumeName, "Renamed Volume")
+    }
+
     func testCalculatesNetworkRateFromCounterDelta() {
         var uptime = 0.0
         let above32Bits = UInt64(UInt32.max) + 100

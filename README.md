@@ -18,6 +18,7 @@ CoreBar is a quiet macOS menu bar monitor for CPU, memory, disk, and network act
 - Card overviews resize with visible metrics. Overall health includes hidden CPU, memory, and disk metrics, and marks a hidden alert source explicitly.
 - Capacity details remain readable; network rates identify combined traffic, and chart help describes the latest 30 samples and automatic network scaling.
 - A detail panel with exact used, free, and total values.
+- Disk details prioritize home and external volume capacities, identify the home volume by name, and keep a smaller home-volume history below the capacity list.
 - Disk details list mounted local external volumes with names, paths and capacity, including separate partitions. Mount changes refresh on the next sample; capacity is cached up to 60 seconds. The overview and overall alerts still refer to the home volume. Detail scroll indicators are hidden; scrolling remains available.
 - Thin CPU/network trend lines and calibrated memory/disk capacity bars. Hover over a trend or use arrow keys to inspect samples.
 - Click a metric or its chevron for recent history, average and peak values, and explanations; return with Back to Usage or ⌘[. Network details show download and upload separately.
