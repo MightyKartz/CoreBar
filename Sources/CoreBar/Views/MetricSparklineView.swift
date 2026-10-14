@@ -252,15 +252,11 @@ struct ChartInspectionSample: Equatable {
 
 /// A fixed slot keeps sample hints clear of titles and within the chart bounds.
 struct ChartInspectionCallout: View {
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.colorSchemeContrast) private var contrast
     let sample: ChartInspectionSample
     var compact = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(sample.time).foregroundStyle(DesignTokens.supportingText)
+        VStack(alignment: .leading, spacing: 2) {
             ForEach(Array(sample.readings.enumerated()), id: \.offset) { _, reading in
                 HStack(spacing: 4) {
                     Text(reading.title)
@@ -270,18 +266,9 @@ struct ChartInspectionCallout: View {
             }
         }
         .font(.system(size: compact ? 9 : 10, weight: .medium))
+        .foregroundStyle(.primary)
         .lineLimit(1)
         .minimumScaleFactor(0.75)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .background {
-            let shape = RoundedRectangle(cornerRadius: 6)
-            if colorScheme == .light || reduceTransparency || contrast == .increased {
-                shape.fill(Color(nsColor: .controlBackgroundColor))
-            } else {
-                shape.fill(.regularMaterial)
-            }
-        }
     }
 }
 

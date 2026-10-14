@@ -21,11 +21,11 @@ enum DesignTokens {
     static let iconContainer: CGFloat = 28
     static let classicIconContainer: CGFloat = 26
     static let classicProgressHeight: CGFloat = 3
-    static let tileMinHeight: CGFloat = 188
+    static let tileMinHeight: CGFloat = 176
     /// Compact flat classic list row (one supporting visualization, no card chrome).
-    static let classicRowMinHeight: CGFloat = 128
-    static let overviewInspectionHeight: CGFloat = 28
-    static let detailInspectionHeight: CGFloat = 48
+    static let classicRowMinHeight: CGFloat = 116
+    static let overviewInspectionHeight: CGFloat = 16
+    static let detailInspectionHeight: CGFloat = 32
     static let trendLineWidth: CGFloat = 1.75
     static let chartGuideWidth: CGFloat = 0.5
     static let diskDetailChartHeight: CGFloat = 64

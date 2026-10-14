@@ -47,7 +47,7 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(DesignTokens.panelCornerRadius, 28)
         XCTAssertEqual(DesignTokens.tileCornerRadius, 22)
         XCTAssertEqual(DesignTokens.progressHeight, 4)
-        XCTAssertEqual(DesignTokens.classicRowMinHeight, 128)
+        XCTAssertEqual(DesignTokens.classicRowMinHeight, 116)
         XCTAssertEqual(DesignTokens.classicProgressHeight, 3)
     }
 

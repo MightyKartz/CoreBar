@@ -118,3 +118,9 @@ macOS 26 及以上的经典布局改用与卡片布局相同的透明浮动窗�
 - `swift test`: 66 tests passed, including single-sample geometry, nearest actual timestamp at plot edges and throughout one sample's hit region, accurate pressure/combined labels, and paired network values. Release Xcode build, strict signature verification and diff whitespace checks passed.
 - Background hidden-window renders covered classic/cards, Chinese/English and light/dark. Selected-hint captures used a temporary source copy differing only in initial keyboard selection and a deterministic fixture clock; this establishes displayed layout rather than real pointer/focus behavior. Inspected captures showed readable compact hints and multi-line network hints within their reserved space.
 - Real pointer interaction, full VoiceOver behavior, native glass compositing and hover CPU/GPU increments were not measured. The earlier background CPU observation is not a before/after hover benchmark.
+
+### 2026-10-14 — Plain-text inspection hints
+
+- Per user request, visual inspection hints now show only metric labels and values; the timestamp row, fill/material background and padding are removed. Network detail upload/download remain separate lines. Real timestamps continue to locate samples and describe them for accessibility.
+- Reserved hint slots shrink to 16 points in overview and 32 in details; classic rows and cards use 116/176-point minimums. Plot heights and selection logic are unchanged.
+- 66 unit tests, Release application build, strict signature verification and whitespace checks passed. Hidden-window selected-hint renders covered classic/cards, English/Chinese and light/dark; the inspected card overview displayed only text, without hint time or background. Selection was seeded in a temporary source copy as described above; no real pointer or glass compositing verification was performed and no test window was shown.
