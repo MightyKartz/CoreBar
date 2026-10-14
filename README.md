@@ -23,6 +23,7 @@ CoreBar is a quiet macOS menu bar monitor for CPU, memory, disk, and network act
 - Sample hints show only metric names and values, without timestamps or a background; they reserve their own chart space and identify CPU usage, estimated memory pressure, home-volume capacity, and combined network traffic. Pointer motion only updates selection when the nearest sample changes; single samples and keyboard inspection are supported.
 - Overview value columns show numbers and units only; estimated-pressure and combined-traffic descriptions remain on the left.
 - Details and embedded settings use a left-aligned title with a small back chevron as a single return target, with a Back to Usage tooltip, descriptive accessibility label and ⌘[ shortcut.
+- Overview headers omit the settings button; open Settings from the menu bar icon’s context menu.
 - Thin CPU/network trend lines and calibrated memory/disk capacity bars. Hover over a trend or use arrow keys to inspect samples.
 - Click a metric or its chevron for recent history, average and peak values, and explanations; return with Back to Usage or ⌘[. Network details show download and upload separately.
 - Automatic English or Chinese UI based on your system language.

@@ -92,7 +92,6 @@ struct OverviewPanelHeader: View {
     let percent: Double
     let usesThresholdColors: Bool
     let isHeadlineHidden: Bool
-    let openSettings: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -103,14 +102,6 @@ struct OverviewPanelHeader: View {
 
                 Spacer(minLength: 8)
 
-                PanelIconButton(
-                    systemName: "gearshape",
-                    help: AppText.settings,
-                    foreground: .secondary,
-                    compact: true,
-                    action: openSettings
-                )
-                .keyboardShortcut(",", modifiers: .command)
             }
             .frame(minHeight: 30)
 
@@ -140,7 +131,6 @@ struct StatusPanelView: View {
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @ObservedObject var monitor: SystemMonitor
     @ObservedObject var settings: AppSettings
-    let openSettings: () -> Void
     var usesExternalSystemChrome: Bool = false
     var openDetails: ((MetricKind) -> Void)?
 
@@ -226,8 +216,7 @@ struct StatusPanelView: View {
             metricTitle: AppText.metricTitle(monitor.snapshot.headlineMetric.kind),
             percent: monitor.snapshot.headlineMetric.value,
             usesThresholdColors: settings.useThresholdColors,
-            isHeadlineHidden: !settings.visibleMenuKinds.contains(monitor.snapshot.headlineMetric.kind),
-            openSettings: openSettings
+            isHeadlineHidden: !settings.visibleMenuKinds.contains(monitor.snapshot.headlineMetric.kind)
         )
     }
 }
@@ -290,7 +279,6 @@ struct SystemDefaultPanelView: View {
                         StatusPanelView(
                             monitor: monitor,
                             settings: settings,
-                            openSettings: navigation.showSettings,
                             usesExternalSystemChrome: true,
                             openDetails: navigation.showDetails
                         )
@@ -298,7 +286,6 @@ struct SystemDefaultPanelView: View {
                         ControlCenterPanelView(
                             monitor: monitor,
                             settings: settings,
-                            openSettings: navigation.showSettings,
                             showsChrome: false,
                             openDetails: navigation.showDetails
                         )
@@ -324,7 +311,6 @@ struct SystemDefaultPanelView: View {
 struct ControlCenterPanelView: View {
     @ObservedObject var monitor: SystemMonitor
     @ObservedObject var settings: AppSettings
-    let openSettings: () -> Void
     var showsChrome: Bool = true
     var openDetails: ((MetricKind) -> Void)?
 
@@ -422,8 +408,7 @@ struct ControlCenterPanelView: View {
             metricTitle: AppText.metricTitle(monitor.snapshot.headlineMetric.kind),
             percent: monitor.snapshot.headlineMetric.value,
             usesThresholdColors: settings.useThresholdColors,
-            isHeadlineHidden: !settings.visibleMenuKinds.contains(monitor.snapshot.headlineMetric.kind),
-            openSettings: openSettings
+            isHeadlineHidden: !settings.visibleMenuKinds.contains(monitor.snapshot.headlineMetric.kind)
         )
     }
 }

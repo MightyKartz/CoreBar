@@ -142,3 +142,9 @@ macOS 26 及以上的经典布局改用与卡片布局相同的透明浮动窗�
 - Detail and embedded settings headers now use one left-aligned title with a small back chevron, replacing the separate back icon/right-aligned title arrangement. Clicking the whole title invokes the existing overview action. Back to Usage help, a page-specific accessibility name and Command-[ remain.
 - Release build, strict signature verification and whitespace checks passed. Hidden-window renders covered classic/cards, Chinese/English and light/dark detail/settings pages. The inspected Chinese dark network header shows the unified title at the left and an empty right side. Test windows remained unshown.
 - Unit tests were not rerun for this control/layout-only change. Real clicking/shortcuts, full VoiceOver and native glass compositing were not exercised in this round.
+
+### 2026-10-14 — Overview without settings icon
+
+- The shared overview header no longer displays the gear button. Removed the unused settings callback chain from overview/header components; the status-item context menu still provides Settings. Header size and metric navigation are unchanged.
+- Release application build, strict signature verification and whitespace checks passed. Hidden-window classic/cards, Chinese/English and light/dark renders completed; the inspected classic dark overview had an empty top-right header area. No test window was displayed.
+- This is a reversible header/control removal; unit tests were not rerun. The context-menu action was checked in source, not exercised in the foreground. Native glass compositing, real pointer and full accessibility behavior were not verified in this round.
