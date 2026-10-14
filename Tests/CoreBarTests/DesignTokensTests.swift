@@ -47,7 +47,7 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(DesignTokens.panelCornerRadius, 28)
         XCTAssertEqual(DesignTokens.tileCornerRadius, 22)
         XCTAssertEqual(DesignTokens.progressHeight, 4)
-        XCTAssertEqual(DesignTokens.classicRowMinHeight, 96)
+        XCTAssertEqual(DesignTokens.classicRowMinHeight, 108)
         XCTAssertEqual(DesignTokens.classicProgressHeight, 3)
     }
 
@@ -56,6 +56,26 @@ final class DesignTokensTests: XCTestCase {
         XCTAssertEqual(ClassicMetricVisualization(kind: .memory), .progress)
         XCTAssertEqual(ClassicMetricVisualization(kind: .disk), .progress)
         XCTAssertEqual(ClassicMetricVisualization(kind: .network), .sparkline)
+    }
+
+    @MainActor
+    func testDetailNavigationKeepsItsSizeAndReturnsToCurrentOverview() {
+        let suite = "CoreBarTests.DetailSize.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = AppSettings(defaults: defaults, appliesSystemAppearance: false)
+        let navigation = SystemPanelNavigationModel()
+        for kind in [MetricKind.cpu, .memory, .disk, .network] {
+            navigation.showDetails(kind)
+            XCTAssertEqual(navigation.page, .detail(kind))
+            let size = PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page)
+            settings.showNetwork.toggle()
+            settings.panelStyle = settings.panelStyle == .classic ? .controlCenter : .classic
+            XCTAssertEqual(PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page), size)
+            navigation.showOverview()
+            let expected = settings.panelStyle == .classic ? StatusPanelView.contentSize(settings: settings) : ControlCenterPanelView.contentSize(settings: settings)
+            XCTAssertEqual(PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page), expected)
+        }
     }
 
     func testAdaptiveMetricGridUsesIntentionalSingletonRows() {

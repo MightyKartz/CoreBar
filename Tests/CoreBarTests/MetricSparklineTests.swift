@@ -2,6 +2,13 @@ import XCTest
 @testable import CoreBar
 
 final class MetricSparklineTests: XCTestCase {
+    func testUnevenSampleTimesUseActualHorizontalSpacing() {
+        let times = [0.0, 1.0, 10.0].map { Date(timeIntervalSince1970: $0) }
+        let points = MetricSparklineView.points(for: [0.2, 0.3, 0.4], in: CGSize(width: 100, height: 30), fixedRange: 0...1, timestamps: times)
+        XCTAssertEqual(points[1].x, 10, accuracy: 0.01)
+        XCTAssertEqual(points.last!.x, 100, accuracy: 0.01)
+    }
+
     func testPercentageAndAdaptiveNormalization() {
         XCTAssertEqual(MetricSparklineView.normalizedValues([0.02, 0.03], fixedRange: 0...1), [0.02, 0.03])
         XCTAssertEqual(MetricSparklineView.normalizedValues([0, 500, 1_000], fixedRange: nil), [0, 0.5, 1])

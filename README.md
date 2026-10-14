@@ -18,13 +18,14 @@ CoreBar is a quiet macOS menu bar monitor for CPU, memory, disk, and network act
 - Card overviews resize with visible metrics. Overall health includes hidden CPU, memory, and disk metrics, and marks a hidden alert source explicitly.
 - Capacity details remain readable; network rates identify combined traffic, and chart help describes the latest 30 samples and automatic network scaling.
 - A detail panel with exact used, free, and total values.
-- CPU and network trends from the latest 30 scheduled samples, with progress bars for memory and disk.
+- Thin CPU/network trend lines and calibrated memory/disk capacity bars. Hover over a trend or use arrow keys to inspect samples.
+- Click a metric or its chevron for recent history, average and peak values, and explanations; return with Back to Usage or ⌘[. Network details show download and upload separately.
 - Automatic English or Chinese UI based on your system language.
 - Local-only system readings. No account, tracking, or cloud service.
 
 ![CoreBar popover preview](docs/images/panel-preview.svg)
 
-The panel labels the memory metric **Memory**. Its percentage is a pressure estimate calculated from system page statistics, not Activity Monitor's pressure signal. Used memory is shown separately and does not correspond to that percentage. Network rates include active non-loopback interfaces, including virtual interfaces. The time span of each trend changes with the refresh interval.
+The panel labels the memory metric **Memory** and its main percentage **Estimated pressure**, calculated from system page statistics rather than Activity Monitor's pressure signal. The capacity bar and its percentage show used memory divided by physical memory, independently of pressure. Network rates include active non-loopback interfaces, including virtual interfaces. Trends retain the latest 30 samples with actual timestamps, so their displayed time span reflects interval changes and sampling gaps. Disk capacity readings are cached for up to 60 seconds.
 
 ## Why CoreBar
 

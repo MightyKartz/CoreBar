@@ -152,7 +152,7 @@ struct LiveTimestampLabel: View {
 
             Text("\(AppText.updated) \(timestamp.shortTimeText)")
                 .font(.system(size: 11.5, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.supportingText)
                 .monospacedDigit()
         }
         .accessibilityLabel("\(AppText.live), \(AppText.updated) \(timestamp.shortTimeText)")
@@ -161,9 +161,11 @@ struct LiveTimestampLabel: View {
 
 struct MetricProgressBar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
     let value: Double
     let color: Color
     var height: CGFloat = DesignTokens.progressHeight
+    var thresholds: [Double] = []
 
     var body: some View {
         let displayed = value.clamped01
@@ -171,7 +173,8 @@ struct MetricProgressBar: View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.primary.opacity(0.08))
+                    .fill(Color.primary.opacity(contrast == .increased ? 0.22 : 0.10))
+                    .frame(height: height)
 
                 Capsule()
                     .fill(
@@ -181,11 +184,25 @@ struct MetricProgressBar: View {
                             endPoint: .trailing
                         )
                     )
-                    .frame(width: max(displayed > 0.001 ? 2 : 0, proxy.size.width * displayed.clamped01))
+                    .frame(width: proxy.size.width * displayed, height: height)
                     .animation(DesignTokens.valueAnimation(reduceMotion: reduceMotion), value: displayed)
+
+                ForEach([0.25, 0.5, 0.75], id: \.self) { tick in
+                    Rectangle()
+                        .fill(Color.primary.opacity(contrast == .increased ? 0.5 : 0.18))
+                        .frame(width: DesignTokens.chartGuideWidth, height: height)
+                        .offset(x: proxy.size.width * tick)
+                }
+                ForEach(thresholds, id: \.self) { threshold in
+                    Rectangle()
+                        .fill(Color.primary.opacity(contrast == .increased ? 0.8 : 0.45))
+                        .frame(width: 1, height: height + 6)
+                        .offset(x: proxy.size.width * threshold.clamped01)
+                }
             }
         }
-        .frame(height: height)
+        .frame(height: height + 6)
+        .accessibilityHidden(true)
     }
 }
 

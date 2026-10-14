@@ -54,6 +54,56 @@ enum AppText {
     static var totalCapacity: String { choose(en: "Total", zh: "总容量") }
     static var combinedTraffic: String { choose(en: "Combined", zh: "收发合计") }
     static var pressure: String { choose(en: "Pressure", zh: "压力") }
+    static var estimatedPressure: String { choose(en: "Estimated pressure", zh: "压力估算") }
+    static var capacityUsage: String { choose(en: "Capacity used", zh: "容量占用") }
+    static var showDetails: String { choose(en: "Show metric details", zh: "查看指标详情") }
+    static var recentAverage: String { choose(en: "Recent average", zh: "近期平均") }
+    static var recentPeak: String { choose(en: "Recent peak", zh: "近期峰值") }
+    static var now: String { choose(en: "Now", zh: "现在") }
+    static var automaticScale: String { choose(en: "Auto-scaled", zh: "自动缩放") }
+    static var chartRange: String { choose(en: "Range", zh: "范围") }
+    static var inspectChartHint: String {
+        choose(en: "Hover or use left and right arrows to inspect samples", zh: "悬停或使用左右方向键检视采样值")
+    }
+    static var samplingScope: String { choose(en: "Scope", zh: "统计范围") }
+    static var networkScope: String { choose(en: "Enabled non-loopback interfaces", zh: "启用的非回环接口") }
+    static var uploadDashed: String { choose(en: "Upload: dashed", zh: "上传：虚线") }
+    static func currentLoadFor(_ kind: MetricKind) -> String {
+        kind == .disk ? capacityUsage : currentLoad
+    }
+    static func thresholdExplanation(_ kind: MetricKind) -> String {
+        switch kind {
+        case .disk: choose(en: "Capacity: watch at 85%, critical at 95%", zh: "容量占用：85% 提醒，95% 严重")
+        case .memory: choose(en: "Estimated pressure: watch at 75%, critical at 90%", zh: "压力估算：75% 提醒，90% 严重")
+        case .cpu: choose(en: "CPU usage: watch at 75%, critical at 90%", zh: "CPU 使用率：75% 提醒，90% 严重")
+        case .network: ""
+        }
+    }
+    static var memoryExplanation: String {
+        choose(en: "Pressure is a local estimate, not Activity Monitor’s pressure signal. Capacity used is calculated separately.",
+               zh: "压力为本地估算，不等同于活动监视器的压力信号；容量占用单独计算。")
+    }
+    static func metricExplanation(_ kind: MetricKind) -> String {
+        switch kind {
+        case .cpu: choose(en: "Aggregate CPU usage between samples; the chart shows recent changes.", zh: "两次采样之间的整体 CPU 使用率；折线显示近期变化。")
+        case .memory: memoryExplanation
+        case .disk: choose(en: "Used capacity of the home volume. Cached for up to 60 seconds; this is not disk activity.", zh: "用户目录所在卷的容量占用，最多缓存 60 秒；不表示磁盘读写速度。")
+        case .network: choose(en: "Combined traffic is download plus upload across enabled non-loopback interfaces.", zh: "收发合计为启用的非回环接口的下载与上传之和。")
+        }
+    }
+    static func metricHint(_ kind: MetricKind) -> String {
+        switch kind {
+        case .cpu: choose(en: "Aggregate CPU usage between samples", zh: "两次采样之间的整体 CPU 使用率")
+        case .memory: choose(en: "Estimated pressure; the capacity bar shows used / total memory", zh: "百分比为压力估算；容量条表示已用／总内存")
+        case .disk: choose(en: "Capacity of the home volume, not disk read/write activity", zh: "用户目录所在卷的容量占用，不表示磁盘读写速度")
+        case .network: choose(en: "Combined traffic = download + upload", zh: "收发合计＝下载＋上传")
+        }
+    }
+    static func historySummary(timestamps: [Date]) -> String {
+        guard let first = timestamps.first, let last = timestamps.last else { return waiting }
+        let elapsed = max(0, Int(last.timeIntervalSince(first)))
+        return choose(en: "\(timestamps.count) samples · \(elapsed)s", zh: "\(timestamps.count) 次采样 · \(elapsed) 秒")
+    }
     static var cores: String { choose(en: "cores", zh: "核心") }
     static var currentLoad: String { choose(en: "Current load", zh: "当前负载") }
     static var waiting: String { choose(en: "Waiting for first sample", zh: "等待首次采样") }

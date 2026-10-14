@@ -75,7 +75,9 @@ final class StatusItemController: NSObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] page in
                 guard let self, self.systemNavigation.page == page else { return }
-                self.resizeSystemPanel(to: PanelMetricsLayout.systemDefaultPanelSize(settings: self.settings, page: page))
+                let size = PanelMetricsLayout.systemDefaultPanelSize(settings: self.settings, page: page)
+                self.resizeSystemPanel(to: size)
+                if self.popover.isShown { self.popover.contentSize = size }
             }
     }
 
@@ -93,7 +95,12 @@ final class StatusItemController: NSObject {
     }
 
     private func configurePopover() {
-        configureSharedPopover(popover, size: StatusPanelView.contentSize(settings: settings), rootView: classicPanelView)
+        configureSharedPopover(
+            popover,
+            size: PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: systemNavigation.page),
+            rootView: SystemDefaultPanelView(monitor: monitor, settings: settings, navigation: systemNavigation,
+                                           close: { [weak self] in self?.popover.performClose(nil) }, usesLegacyPopover: true)
+        )
     }
 
     private func configureSettingsPopover() {
@@ -130,7 +137,12 @@ final class StatusItemController: NSObject {
         statusItem.length = image.size.width
         button.image = image
         var lines = settings.visibleMetrics(from: snapshot)
-            .map { "\(AppText.metricTitle($0.kind)): \($0.value.percentText) · \($0.level.title)" }
+            .map { metric in
+                let title = metric.kind == .memory
+                    ? "\(AppText.metricTitle(metric.kind)) · \(AppText.estimatedPressure)"
+                    : AppText.metricTitle(metric.kind)
+                return "\(title): \(metric.value.percentText) · \(metric.level.title)"
+            }
 
         if settings.showNetwork {
             lines.append("\(AppText.metricTitle(.network)): \(AppText.download) \(snapshot.network.downloadBytesPerSecond.byteRateText) · \(AppText.upload) \(snapshot.network.uploadBytesPerSecond.byteRateText)")
@@ -181,7 +193,7 @@ final class StatusItemController: NSObject {
         // --- Metrics ---
         if popover.isShown {
             if style == .classic {
-                popover.contentSize = StatusPanelView.contentSize(settings: settings)
+                popover.contentSize = PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: systemNavigation.page)
             } else {
                 popover.performClose(nil)
             }
@@ -291,7 +303,11 @@ final class StatusItemController: NSObject {
         if usesSystemPanel, systemPanel?.isVisible == true && systemNavigation.page == .overview {
             closeSystemPanel()
         } else if !usesSystemPanel, popover.isShown {
-            popover.performClose(sender)
+            if systemNavigation.page == .overview {
+                popover.performClose(sender)
+            } else {
+                systemNavigation.showOverview()
+            }
         } else {
             openOverviewPanel()
         }
@@ -303,6 +319,7 @@ final class StatusItemController: NSObject {
         settingsPopover.performClose(nil)
         if !usesSystemPanel {
             closeSystemPanel()
+            systemNavigation.showOverview()
             if !popover.isShown {
                 configurePopover()
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
@@ -556,14 +573,6 @@ final class StatusItemController: NSObject {
         let x = min(max(buttonFrame.midX - size.width / 2, screenFrame.minX + 8), screenFrame.maxX - size.width - 8)
         let y = buttonFrame.minY - size.height - 8
         return NSPoint(x: x, y: max(y, screenFrame.minY + 8))
-    }
-
-    private var classicPanelView: some View {
-        StatusPanelView(
-            monitor: monitor,
-            settings: settings,
-            openSettings: { [weak self] in self?.openSettingsPanel() }
-        )
     }
 
     private var systemPanelView: some View {

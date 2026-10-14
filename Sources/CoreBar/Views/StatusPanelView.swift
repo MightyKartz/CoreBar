@@ -59,12 +59,16 @@ enum PanelMetricsLayout {
     ) -> NSSize {
         NSSize(
             width: DesignTokens.panelWidth,
-            height: page == .settings ? settingsIdealHeight : (
-                settings.panelStyle == .classic
-                    ? classicIntrinsicHeight(settings: settings)
-                    : controlCenterIntrinsicHeight(settings: settings)
-            )
+            height: pageHeight(settings: settings, page: page)
         )
+    }
+
+    private static func pageHeight(settings: AppSettings, page: SystemPanelNavigationModel.Page) -> CGFloat {
+        switch page {
+        case .settings: settingsIdealHeight
+        case .detail: DesignTokens.detailPanelHeight
+        case .overview: settings.panelStyle == .classic ? classicIntrinsicHeight(settings: settings) : controlCenterIntrinsicHeight(settings: settings)
+        }
     }
 
     static func classicPanelSize(settings: AppSettings) -> NSSize {
@@ -138,6 +142,7 @@ struct StatusPanelView: View {
     @ObservedObject var settings: AppSettings
     let openSettings: () -> Void
     var usesExternalSystemChrome: Bool = false
+    var openDetails: ((MetricKind) -> Void)?
 
     static func contentSize(settings: AppSettings) -> NSSize {
         PanelMetricsLayout.classicPanelSize(settings: settings)
@@ -160,7 +165,9 @@ struct StatusPanelView: View {
                     MetricRowView(
                         metric: metric,
                         history: monitor.history.values(for: metric.kind),
-                        usesThresholdColors: settings.useThresholdColors
+                        usesThresholdColors: settings.useThresholdColors,
+                        timestamps: monitor.history.timestamps,
+                        openDetails: openDetails.map { action in { action(metric.kind) } }
                     )
                     .overlay(alignment: .bottom) {
                         if index < metrics.count - 1 || networkShown {
@@ -173,7 +180,9 @@ struct StatusPanelView: View {
                     NetworkRowView(
                         network: monitor.snapshot.network,
                         history: monitor.history.values(for: .network),
-                        usesThresholdColors: settings.useThresholdColors
+                        usesThresholdColors: settings.useThresholdColors,
+                        timestamps: monitor.history.timestamps,
+                        openDetails: openDetails.map { action in { action(.network) } }
                     )
                 }
 
@@ -230,6 +239,7 @@ final class SystemPanelNavigationModel: ObservableObject {
     enum Page: Equatable {
         case overview
         case settings
+        case detail(MetricKind)
     }
 
     @Published private(set) var page: Page = .overview
@@ -241,6 +251,10 @@ final class SystemPanelNavigationModel: ObservableObject {
     func showSettings() {
         page = .settings
     }
+
+    func showDetails(_ kind: MetricKind) {
+        page = .detail(kind)
+    }
 }
 
 /// One floating panel whose SwiftUI content switches in place.
@@ -251,44 +265,59 @@ struct SystemDefaultPanelView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var navigation: SystemPanelNavigationModel
     let close: () -> Void
+    var usesLegacyPopover: Bool = false
 
     var body: some View {
         let size = PanelMetricsLayout.systemDefaultPanelSize(settings: settings, page: navigation.page)
 
-        SystemDefaultPanelSurface {
-            ZStack {
-                if navigation.page == .overview {
-                    Group {
-                        if settings.panelStyle == .classic {
-                            StatusPanelView(
-                                monitor: monitor,
-                                settings: settings,
-                                openSettings: navigation.showSettings,
-                                usesExternalSystemChrome: true
-                            )
-                        } else {
-                            ControlCenterPanelView(
-                                monitor: monitor,
-                                settings: settings,
-                                openSettings: navigation.showSettings,
-                                showsChrome: false
-                            )
-                        }
-                    }
-                    .transition(.opacity)
-                } else {
-                    StandaloneSettingsPanelView(
-                        settings: settings,
-                        showOverview: navigation.showOverview,
-                        usesExternalSystemChrome: true
-                    )
-                    .transition(.opacity)
-                }
+        Group {
+            if usesLegacyPopover {
+                pageContent(size: size)
+                    .background(ClassicPanelBackground(showsBorder: false, cornerRadius: 0))
+            } else {
+                SystemDefaultPanelSurface { pageContent(size: size) }
             }
-            .frame(width: size.width, height: size.height, alignment: .topLeading)
         }
         .animation(.easeOut(duration: reduceMotion ? 0.10 : 0.16), value: navigation.page)
         .onExitCommand(perform: close)
+    }
+
+    private func pageContent(size: NSSize) -> some View {
+        ZStack {
+            if navigation.page == .overview {
+                Group {
+                    if settings.panelStyle == .classic {
+                        StatusPanelView(
+                            monitor: monitor,
+                            settings: settings,
+                            openSettings: navigation.showSettings,
+                            usesExternalSystemChrome: true,
+                            openDetails: navigation.showDetails
+                        )
+                    } else {
+                        ControlCenterPanelView(
+                            monitor: monitor,
+                            settings: settings,
+                            openSettings: navigation.showSettings,
+                            showsChrome: false,
+                            openDetails: navigation.showDetails
+                        )
+                    }
+                }
+                .transition(.opacity)
+            } else if navigation.page == .settings {
+                StandaloneSettingsPanelView(
+                    settings: settings,
+                    showOverview: navigation.showOverview,
+                    usesExternalSystemChrome: true
+                )
+                .transition(.opacity)
+            } else if case .detail(let kind) = navigation.page {
+                MetricDetailView(monitor: monitor, settings: settings, kind: kind, back: navigation.showOverview)
+                    .transition(.opacity)
+            }
+        }
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
     }
 }
 
@@ -297,6 +326,7 @@ struct ControlCenterPanelView: View {
     @ObservedObject var settings: AppSettings
     let openSettings: () -> Void
     var showsChrome: Bool = true
+    var openDetails: ((MetricKind) -> Void)?
 
     static func contentSize(settings: AppSettings) -> NSSize {
         PanelMetricsLayout.controlCenterPanelSize(settings: settings)
@@ -370,13 +400,17 @@ struct ControlCenterPanelView: View {
             MetricTileView(
                 metric: metric,
                 history: monitor.history.values(for: metric.kind),
-                usesThresholdColors: settings.useThresholdColors
+                usesThresholdColors: settings.useThresholdColors,
+                timestamps: monitor.history.timestamps,
+                openDetails: openDetails.map { action in { action(metric.kind) } }
             )
         } else {
             NetworkTileView(
                 network: monitor.snapshot.network,
                 history: monitor.history.values(for: .network),
-                usesThresholdColors: settings.useThresholdColors
+                usesThresholdColors: settings.useThresholdColors,
+                timestamps: monitor.history.timestamps,
+                openDetails: openDetails.map { action in { action(.network) } }
             )
         }
     }

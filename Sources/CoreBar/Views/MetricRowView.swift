@@ -21,6 +21,8 @@ struct MetricRowView: View {
     let metric: MetricSnapshot
     let history: [Double]
     let usesThresholdColors: Bool
+    var timestamps: [Date] = []
+    var openDetails: (() -> Void)?
 
     private var accentColor: Color {
         DesignTokens.accent(for: metric.level, kind: metric.kind, usesThresholdColors: usesThresholdColors)
@@ -46,28 +48,36 @@ struct MetricRowView: View {
 
                     Text(compactDetailText)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DesignTokens.supportingText)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
-                        .help(compactDetailText)
                 }
+                .help(AppText.metricHint(metric.kind))
 
                 Spacer(minLength: 8)
 
-                Text(metric.value.percentText)
-                    .font(.system(size: 18, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(valueColor)
-                    .contentTransition(reduceMotion ? .identity : .numericText(value: metric.value))
-                    .animation(DesignTokens.valueAnimation(reduceMotion: reduceMotion), value: metric.value)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(metric.value.percentText)
+                        .font(.system(size: 18, weight: .semibold).monospacedDigit())
+                        .foregroundStyle(valueColor)
+                        .contentTransition(reduceMotion ? .identity : .numericText(value: metric.value))
+                        .animation(DesignTokens.valueAnimation(reduceMotion: reduceMotion), value: metric.value)
+                    if metric.kind == .memory {
+                        Text(AppText.estimatedPressure).font(.system(size: 10)).foregroundStyle(DesignTokens.supportingText)
+                    }
+                }
+                .help(AppText.metricHint(metric.kind))
+                if let openDetails { MetricDetailButton(action: openDetails) }
             }
 
             visualization
         }
         .padding(.vertical, 9)
         .frame(maxWidth: .infinity, minHeight: DesignTokens.classicRowMinHeight, alignment: .leading)
-        .accessibilityElement(children: .combine)
+        .contentShape(Rectangle())
+        .onTapGesture { openDetails?() }
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("\(AppText.metricTitle(metric.kind)), \(metric.value.percentText), \(compactDetailText)")
-        .accessibilityHint(metric.kind == .cpu ? AppText.recentSamplesHint : "")
     }
 
     @ViewBuilder
@@ -77,16 +87,31 @@ struct MetricRowView: View {
             MetricSparklineView(
                 values: history,
                 color: accentColor,
-                showsArea: false
+                showsArea: false,
+                historyDescription: AppText.historySummary(timestamps: timestamps),
+                timestamps: timestamps,
+                valueKind: metric.kind,
+                allowsInspection: true
             )
             .frame(height: 22)
         case .progress:
-            MetricProgressBar(
-                value: metric.value,
-                color: accentColor,
-                height: DesignTokens.classicProgressHeight
-            )
-            .frame(height: 22)
+            VStack(alignment: .leading, spacing: 4) {
+                if let capacity = metric.capacityFraction {
+                    MetricProgressBar(
+                        value: capacity,
+                        color: metric.kind == .memory ? DesignTokens.accent(for: .normal, kind: .memory, usesThresholdColors: usesThresholdColors) : accentColor,
+                        height: DesignTokens.classicProgressHeight,
+                        thresholds: metric.kind == .disk ? [0.85, 0.95] : []
+                    )
+                } else {
+                    Text(AppText.waiting).font(.system(size: 10)).foregroundStyle(DesignTokens.supportingText)
+                }
+                if metric.kind == .memory {
+                    Text("\(AppText.capacityUsage) \(metric.capacityFraction?.percentText ?? "—")")
+                        .font(.system(size: 10).monospacedDigit()).foregroundStyle(DesignTokens.supportingText)
+                }
+            }
+            .frame(height: 28)
         }
     }
 
@@ -125,6 +150,8 @@ struct NetworkRowView: View {
     let network: NetworkSnapshot
     let history: [Double]
     let usesThresholdColors: Bool
+    var timestamps: [Date] = []
+    var openDetails: (() -> Void)?
 
     private var accent: Color {
         DesignTokens.accent(for: .normal, kind: .network, usesThresholdColors: usesThresholdColors)
@@ -153,17 +180,18 @@ struct NetworkRowView: View {
                         Text("\(AppText.upload) \(network.uploadBytesPerSecond.byteRateText)")
                     }
                     .font(.system(size: 12, weight: .medium).monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.supportingText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.9)
                 }
+                .help(AppText.metricHint(.network))
 
                 Spacer(minLength: 8)
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(AppText.combinedTraffic)
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DesignTokens.supportingText)
                     Text(totalRate.byteRateText)
                         .font(.system(size: 15, weight: .semibold).monospacedDigit())
                         .foregroundStyle(.primary)
@@ -171,20 +199,26 @@ struct NetworkRowView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 }
+                if let openDetails { MetricDetailButton(action: openDetails) }
             }
 
             MetricSparklineView(
                 values: history,
                 color: accent,
-                fixedRange: nil,
+                fixedRange: 0...MetricSparklineView.rollingUpperBound(for: history),
                 showsArea: false,
-                historyDescription: AppText.networkHistoryHint
+                historyDescription: "\(AppText.historySummary(timestamps: timestamps)) · \(AppText.automaticScale)",
+                timestamps: timestamps,
+                valueKind: .network,
+                allowsInspection: true
             )
             .frame(height: 22)
         }
         .padding(.vertical, 9)
         .frame(maxWidth: .infinity, minHeight: DesignTokens.classicRowMinHeight, alignment: .leading)
-        .accessibilityElement(children: .combine)
+        .contentShape(Rectangle())
+        .onTapGesture { openDetails?() }
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("\(AppText.metricTitle(.network)), \(AppText.combinedTraffic) \(totalRate.byteRateText), \(ratesDetail)")
         .accessibilityHint(AppText.networkHistoryHint)
     }

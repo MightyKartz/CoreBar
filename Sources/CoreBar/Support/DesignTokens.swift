@@ -23,7 +23,12 @@ enum DesignTokens {
     static let classicProgressHeight: CGFloat = 3
     static let tileMinHeight: CGFloat = 160
     /// Compact flat classic list row (one supporting visualization, no card chrome).
-    static let classicRowMinHeight: CGFloat = 96
+    static let classicRowMinHeight: CGFloat = 108
+    static let trendLineWidth: CGFloat = 1.75
+    static let chartGuideWidth: CGFloat = 0.5
+    static let detailPanelHeight: CGFloat = 540
+    /// Capacity and rate context stays legible on both solid and glass surfaces.
+    static var supportingText: Color { Color.primary.opacity(0.8) }
     static let gridSpacing: CGFloat = 10
     static let listSpacing: CGFloat = 10
 

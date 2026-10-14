@@ -20,6 +20,12 @@ struct MetricSnapshot: Identifiable {
     let coreCount: Int?
 
     var id: MetricKind { kind }
+
+    /// Capacity is distinct from memory pressure. Missing capacity is not 0%.
+    var capacityFraction: Double? {
+        guard let used = usedBytes, let total = totalBytes, total > 0 else { return nil }
+        return (Double(used) / Double(total)).clamped01
+    }
 }
 
 struct NetworkSnapshot {
@@ -110,17 +116,25 @@ struct MetricHistory {
     private(set) var memory: [Double]
     private(set) var disk: [Double]
     private(set) var network: [Double]
+    private(set) var timestamps: [Date] = []
+    private(set) var download: [Double] = []
+    private(set) var upload: [Double] = []
 
     static let empty = MetricHistory(cpu: [], memory: [], disk: [], network: [])
 
     mutating func append(_ snapshot: SystemSnapshot, maxCount: Int) {
-        append(snapshot.cpu.value, to: &cpu, maxCount: maxCount, clamp: true)
-        append(snapshot.memory.value, to: &memory, maxCount: maxCount, clamp: true)
-        append(snapshot.disk.value, to: &disk, maxCount: maxCount, clamp: true)
+        let limit = max(0, maxCount)
+        timestamps.append(snapshot.timestamp)
+        if timestamps.count > limit { timestamps.removeFirst(timestamps.count - limit) }
+        append(snapshot.network.downloadBytesPerSecond, to: &download, maxCount: limit, clamp: false)
+        append(snapshot.network.uploadBytesPerSecond, to: &upload, maxCount: limit, clamp: false)
+        append(snapshot.cpu.value, to: &cpu, maxCount: limit, clamp: true)
+        append(snapshot.memory.value, to: &memory, maxCount: limit, clamp: true)
+        append(snapshot.disk.value, to: &disk, maxCount: limit, clamp: true)
         append(
             snapshot.network.downloadBytesPerSecond + snapshot.network.uploadBytesPerSecond,
             to: &network,
-            maxCount: maxCount,
+            maxCount: limit,
             clamp: false
         )
     }

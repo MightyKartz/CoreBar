@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10100000000000000000001 /* MetricDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10100000000000000000002 /* MetricDetailView.swift */; };
 		3F87D9136794BD77F681C598 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06C8E135058C4E308CB63B66 /* AppSettings.swift */; };
 		55D2B68D68D6EC2401C19A83 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B424F76F3CBA85922EBB7D /* SettingsView.swift */; };
 		64B558932F6520CB73272AC2 /* SystemMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C16B72C8954F860669C2410 /* SystemMonitorTests.swift */; };
@@ -51,6 +52,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A10100000000000000000002 /* MetricDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricDetailView.swift; sourceTree = "<group>"; };
 		06C8E135058C4E308CB63B66 /* AppSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		34B424F76F3CBA85922EBB7D /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		2C16B72C8954F860669C2410 /* SystemMonitorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SystemMonitorTests.swift; sourceTree = "<group>"; };
@@ -234,6 +236,7 @@
 			isa = PBXGroup;
 			children = (
 				C65869B8337C1ED120DEC20D /* MetricRowView.swift */,
+				A10100000000000000000002 /* MetricDetailView.swift */,
 				613FA0E0F8F6B82E2F89AC38 /* MetricSparklineView.swift */,
 				621F667A5DA34A5689FD7AEC /* MetricTileView.swift */,
 				ACBEDF122E1C4659ADBD5A01 /* PanelChrome.swift */,
@@ -355,6 +358,7 @@
 				F06CF7F9831A93EC49FAA081 /* HealthRules.swift in Sources */,
 				144B02C16AFA997E56B088D7 /* StatusIconRenderer.swift in Sources */,
 				93723D320E6CB23F7450263D /* MetricRowView.swift in Sources */,
+				A10100000000000000000001 /* MetricDetailView.swift in Sources */,
 				21A4ACB676E9DC20B33C5A6D /* MetricSparklineView.swift in Sources */,
 				7C96487778784791BC019A75 /* MetricTileView.swift in Sources */,
 				C86FB67C20DD4CD48F7ED406 /* PanelChrome.swift in Sources */,

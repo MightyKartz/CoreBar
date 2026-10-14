@@ -8,6 +8,8 @@ struct MetricTileView: View {
     let metric: MetricSnapshot
     let history: [Double]
     let usesThresholdColors: Bool
+    var timestamps: [Date] = []
+    var openDetails: (() -> Void)?
 
     private var motionReduced: Bool { envReduceMotion }
 
@@ -25,7 +27,9 @@ struct MetricTileView: View {
                 RoundedRectangle(cornerRadius: DesignTokens.tileCornerRadius, style: .continuous)
                     .strokeBorder(tileStroke, lineWidth: 0.5)
             }
-            .accessibilityElement(children: .combine)
+            .contentShape(Rectangle())
+            .onTapGesture { openDetails?() }
+            .accessibilityElement(children: .contain)
             .accessibilityLabel("\(AppText.metricTitle(metric.kind)), \(metric.value.percentText), \(detailText)\(totalCapacityText.map { ", \($0)" } ?? "")")
             .accessibilityHint(metric.kind == .cpu ? AppText.recentSamplesHint : "")
     }
@@ -34,6 +38,7 @@ struct MetricTileView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center) {
                 iconBadge
+                if let openDetails { MetricDetailButton(action: openDetails) }
                 Spacer(minLength: 4)
                 Text(metric.value.percentText)
                     .font(.system(size: 22, weight: .semibold).monospacedDigit())
@@ -44,8 +49,13 @@ struct MetricTileView: View {
 
             Text(AppText.metricTitle(metric.kind))
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.supportingText)
                 .padding(.top, 10)
+                .help(AppText.metricHint(metric.kind))
+            if metric.kind == .memory {
+                Text(AppText.estimatedPressure)
+                    .font(.system(size: 10)).foregroundStyle(DesignTokens.supportingText)
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(detailText)
@@ -60,8 +70,9 @@ struct MetricTileView: View {
                         .minimumScaleFactor(0.9)
                 }
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(DesignTokens.supportingText)
             .padding(.top, 3)
+            .help(AppText.metricHint(metric.kind))
 
             Spacer(minLength: 10)
 
@@ -78,11 +89,27 @@ struct MetricTileView: View {
             MetricSparklineView(
                 values: history,
                 color: accent,
-                showsArea: true
+                showsArea: true,
+                historyDescription: AppText.historySummary(timestamps: timestamps),
+                timestamps: timestamps,
+                valueKind: metric.kind,
+                allowsInspection: true
             )
             .frame(height: 28)
         case .memory, .disk:
-            MetricProgressBar(value: metric.value, color: accent)
+            VStack(alignment: .leading, spacing: 3) {
+                if let capacity = metric.capacityFraction {
+                    MetricProgressBar(value: capacity,
+                                      color: metric.kind == .memory ? DesignTokens.accent(for: .normal, kind: .memory, usesThresholdColors: usesThresholdColors) : accent,
+                                      thresholds: metric.kind == .disk ? [0.85, 0.95] : [])
+                } else {
+                    Text(AppText.waiting).font(.system(size: 10)).foregroundStyle(DesignTokens.supportingText)
+                }
+                if metric.kind == .memory {
+                    Text("\(AppText.capacityUsage) \(metric.capacityFraction?.percentText ?? "—")")
+                        .font(.system(size: 10).monospacedDigit()).foregroundStyle(DesignTokens.supportingText)
+                }
+            }
         case .network:
             EmptyView()
         }
@@ -94,6 +121,7 @@ struct MetricTileView: View {
             .foregroundStyle(accent)
             .frame(width: DesignTokens.iconContainer, height: DesignTokens.iconContainer)
             .background(accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .accessibilityHidden(true)
     }
 
     private var symbolName: String {
@@ -169,6 +197,8 @@ struct NetworkTileView: View {
     let network: NetworkSnapshot
     let history: [Double]
     let usesThresholdColors: Bool
+    var timestamps: [Date] = []
+    var openDetails: (() -> Void)?
 
     private var motionReduced: Bool { envReduceMotion }
 
@@ -188,6 +218,9 @@ struct NetworkTileView: View {
                     .foregroundStyle(accent)
                     .frame(width: DesignTokens.iconContainer, height: DesignTokens.iconContainer)
                     .background(accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .accessibilityHidden(true)
+
+                if let openDetails { MetricDetailButton(action: openDetails) }
 
                 Spacer(minLength: 4)
 
@@ -207,7 +240,7 @@ struct NetworkTileView: View {
                 Text(AppText.combinedTraffic)
                     .font(.system(size: 12))
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(DesignTokens.supportingText)
             .padding(.top, 10)
 
             VStack(spacing: 3) {
@@ -215,6 +248,7 @@ struct NetworkTileView: View {
                 rateRow(title: AppText.upload, value: network.uploadBytesPerSecond)
             }
             .padding(.top, 6)
+            .help(AppText.metricHint(.network))
 
             Spacer(minLength: 8)
 
@@ -223,7 +257,10 @@ struct NetworkTileView: View {
                 color: accent,
                 fixedRange: 0...MetricSparklineView.rollingUpperBound(for: history),
                 showsArea: true,
-                historyDescription: AppText.networkHistoryHint
+                historyDescription: "\(AppText.historySummary(timestamps: timestamps)) · \(AppText.automaticScale)",
+                timestamps: timestamps,
+                valueKind: .network,
+                allowsInspection: true
             )
             .frame(height: 28)
         }
@@ -235,7 +272,9 @@ struct NetworkTileView: View {
             RoundedRectangle(cornerRadius: DesignTokens.tileCornerRadius, style: .continuous)
                 .strokeBorder(tileStroke, lineWidth: 0.5)
         }
-        .accessibilityElement(children: .combine)
+        .contentShape(Rectangle())
+        .onTapGesture { openDetails?() }
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("\(AppText.metricTitle(.network)), \(AppText.combinedTraffic) \(totalRate.byteRateText), \(AppText.download) \(network.downloadBytesPerSecond.byteRateText), \(AppText.upload) \(network.uploadBytesPerSecond.byteRateText)")
         .accessibilityHint(AppText.networkHistoryHint)
     }
@@ -244,7 +283,7 @@ struct NetworkTileView: View {
         HStack(spacing: 4) {
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.supportingText)
             Spacer(minLength: 0)
             Text(value.byteRateText)
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
