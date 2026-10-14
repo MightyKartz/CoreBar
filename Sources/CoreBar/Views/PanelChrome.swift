@@ -57,6 +57,28 @@ struct LiquidGlassSurface<Content: View>: View {
     }
 }
 
+/// Shared native icon-only navigation for detail and embedded settings pages.
+struct PanelBackButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(AppText.backToUsage, systemImage: "chevron.backward")
+                .labelStyle(.iconOnly)
+                .font(.system(size: 12, weight: .medium))
+                .frame(width: DesignTokens.backButtonSize, height: DesignTokens.backButtonSize)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .controlSize(.small)
+        .tint(Color(nsColor: .systemGray))
+        .foregroundStyle(.primary)
+        .keyboardShortcut("[", modifiers: .command)
+        .help(AppText.backToUsage)
+        .accessibilityLabel(AppText.backToUsage)
+    }
+}
+
 struct HealthPillView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor

@@ -130,3 +130,9 @@ macOS 26 及以上的经典布局改用与卡片布局相同的透明浮动窗�
 - Overview primary value columns now show numbers and units only. Classic memory's pressure caption moves below the title on the left; classic network identifies combined traffic in the left title. Card network's combined caption moves below its left title. Pressure calculations, capacity bars and sampling behavior are unchanged.
 - Release application build, strict signature verification and diff whitespace checks passed. Hidden-window rendering covered classic/cards, Chinese/English and light/dark with long capacity/rate fixtures. Inspected classic dark Chinese and card light English captures retained readable numeric values and left-aligned semantic descriptions. No test window was shown; native glass blending and pointer interactions were not exercised.
 - This is a text/layout change; unit tests were not rerun. The preceding 66-test result remains historical evidence, not a new test run for this revision.
+
+### 2026-10-14 — Shared native icon-only back button
+
+- Details and embedded settings now share a native borderless icon-only `chevron.backward` button at the top left, with a 28-point label hit area, localized Back to Usage tooltip/accessibility name and Command-[ shortcut. The settings title moves to the right to match detail headers. Navigation actions are reused unchanged.
+- Release application build, strict signature verification and whitespace checks passed. Hidden-window rendering covered classic/cards, English/Chinese and light/dark detail/settings pages. Inspected Chinese dark network details and English light card settings show only the arrow at the left, with titles at the right. No test window was displayed.
+- This is a shared control/layout change; unit tests were not rerun. Real clicks, keyboard shortcuts, VoiceOver and native glass compositing were not exercised in this round; prior validation records are not new evidence for this revision.

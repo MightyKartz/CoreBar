@@ -16,6 +16,7 @@ enum DesignTokens {
     static let panelContentHorizontal: CGFloat = 16
     static let tileCornerRadius: CGFloat = 22
     static let classicRowCornerRadius: CGFloat = 18
+    static let backButtonSize: CGFloat = 28
     static let settingsGroupRadius: CGFloat = 16
     static let progressHeight: CGFloat = 4
     static let iconContainer: CGFloat = 28

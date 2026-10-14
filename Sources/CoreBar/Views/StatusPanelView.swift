@@ -484,19 +484,11 @@ struct StandaloneSettingsPanelView: View {
         // Top-aligned like the metrics panel (same insets / footprint).
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
+                PanelBackButton(action: showOverview)
+                Spacer(minLength: 8)
                 Text(AppText.settings)
                     .font(.system(size: 17, weight: .semibold))
                     .tracking(-0.3)
-                Spacer(minLength: 8)
-                Button(action: showOverview) {
-                    Label(AppText.backToUsage, systemImage: "chevron.backward")
-                }
-                .buttonStyle(.borderless)
-                .controlSize(.small)
-                .tint(Color(nsColor: .systemGray))
-                .foregroundStyle(.primary)
-                .keyboardShortcut("[", modifiers: .command)
-                .help(AppText.backToUsage)
             }
             .frame(minHeight: 30)
             .padding(.horizontal, 4)
