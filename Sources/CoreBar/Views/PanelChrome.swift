@@ -57,25 +57,29 @@ struct LiquidGlassSurface<Content: View>: View {
     }
 }
 
-/// Shared native icon-only navigation for detail and embedded settings pages.
-struct PanelBackButton: View {
+/// The page title also provides the visible path back to the overview.
+struct PanelBackTitle: View {
+    let title: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Label(AppText.backToUsage, systemImage: "chevron.backward")
-                .labelStyle(.iconOnly)
-                .font(.system(size: 12, weight: .medium))
-                .frame(width: DesignTokens.backButtonSize, height: DesignTokens.backButtonSize)
-                .contentShape(Rectangle())
+            HStack(spacing: 8) {
+                Image(systemName: "chevron.backward")
+                    .font(.system(size: 12, weight: .medium))
+                    .accessibilityHidden(true)
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .tracking(-0.3)
+            }
+            .frame(minHeight: DesignTokens.navigationTitleMinHeight, alignment: .leading)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
-        .controlSize(.small)
-        .tint(Color(nsColor: .systemGray))
+        .buttonStyle(.plain)
         .foregroundStyle(.primary)
         .keyboardShortcut("[", modifiers: .command)
         .help(AppText.backToUsage)
-        .accessibilityLabel(AppText.backToUsage)
+        .accessibilityLabel("\(title), \(AppText.backToUsage)")
     }
 }
 

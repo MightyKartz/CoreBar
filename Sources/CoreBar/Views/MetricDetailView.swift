@@ -51,9 +51,8 @@ struct MetricDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                PanelBackButton(action: back)
+                PanelBackTitle(title: AppText.metricTitle(kind), action: back)
                 Spacer(minLength: 8)
-                Text(AppText.metricTitle(kind)).font(.system(size: 17, weight: .semibold))
             }
             .frame(minHeight: 30)
 

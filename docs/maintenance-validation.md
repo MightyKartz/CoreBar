@@ -136,3 +136,9 @@ macOS 26 及以上的经典布局改用与卡片布局相同的透明浮动窗�
 - Details and embedded settings now share a native borderless icon-only `chevron.backward` button at the top left, with a 28-point label hit area, localized Back to Usage tooltip/accessibility name and Command-[ shortcut. The settings title moves to the right to match detail headers. Navigation actions are reused unchanged.
 - Release application build, strict signature verification and whitespace checks passed. Hidden-window rendering covered classic/cards, English/Chinese and light/dark detail/settings pages. Inspected Chinese dark network details and English light card settings show only the arrow at the left, with titles at the right. No test window was displayed.
 - This is a shared control/layout change; unit tests were not rerun. Real clicks, keyboard shortcuts, VoiceOver and native glass compositing were not exercised in this round; prior validation records are not new evidence for this revision.
+
+### 2026-10-14 — Left-aligned title as return target
+
+- Detail and embedded settings headers now use one left-aligned title with a small back chevron, replacing the separate back icon/right-aligned title arrangement. Clicking the whole title invokes the existing overview action. Back to Usage help, a page-specific accessibility name and Command-[ remain.
+- Release build, strict signature verification and whitespace checks passed. Hidden-window renders covered classic/cards, Chinese/English and light/dark detail/settings pages. The inspected Chinese dark network header shows the unified title at the left and an empty right side. Test windows remained unshown.
+- Unit tests were not rerun for this control/layout-only change. Real clicking/shortcuts, full VoiceOver and native glass compositing were not exercised in this round.
